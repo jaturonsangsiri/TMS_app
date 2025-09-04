@@ -112,7 +112,7 @@ class FT311UARTInterface() {
       return Pair(maxTemp, minTemp)
     }
 
-      fun appendData(packetData: ByteArray, readSB: MutableList<Byte>, onTemperatureCalculated: (Float?, Float?, Float, Float) -> Unit) {
+      fun                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     appendData(packetData: ByteArray, readSB: MutableList<Byte>, onTemperatureCalculated: (Float?, Float?, Float, Float) -> Unit) {
         try {
           readSB.addAll(packetData.toList())
 
@@ -142,9 +142,9 @@ class FT311UARTInterface() {
             repeat(packet.size) { readSB.removeAt(0) }
           }
 
-          Log.d(debugTag, "Temp probe1: ${fTemp1 ?: "⚠ Not found"} °C")
-          Log.d(debugTag, "Temp probe2: ${fTemp2 ?: "⚠ Not found"} °C")
-          Log.d(debugTag, "Range: $tempMinRange°C ~ $tempMaxRange°C")
+          //Log.d(debugTag, "Temp probe1: ${fTemp1 ?: "⚠ Not found"} °C")
+          //Log.d(debugTag, "Temp probe2: ${fTemp2 ?: "⚠ Not found"} °C")
+          //Log.d(debugTag, "Range: $tempMinRange°C ~ $tempMaxRange°C")
 
           // ส่งผลกลับผ่าน callback
           onTemperatureCalculated(fTemp1, fTemp2, tempMaxRange, tempMinRange)
@@ -242,7 +242,7 @@ class FT311UARTInterface() {
   /* Read Data */
   fun ReadData(numBytes: Int, buffer: ByteArray, actualNumBytes: IntArray):Boolean {
     var numBytes = numBytes
-    Log.d(debugTag, "ReadData called with numBytes=$numBytes, totalBytes=$totalBytes")
+    //Log.d(debugTag, "ReadData called with numBytes=$numBytes, totalBytes=$totalBytes")
 
     /* Should be at least one byte to read */
     if ((numBytes <1) || (totalBytes == 0)) {
@@ -253,7 +253,7 @@ class FT311UARTInterface() {
 
     /* Check if current bytes is more than total bytes */
     if (numBytes > totalBytes!!) {
-      Log.w(debugTag, "numbytes > totalBytes ($numBytes > $totalBytes), adjusting...")
+      //Log.w(debugTag, "numbytes > totalBytes ($numBytes > $totalBytes), adjusting...")
       numBytes = totalBytes!!
     }
   
@@ -261,7 +261,7 @@ class FT311UARTInterface() {
     totalBytes = totalBytes!! - numBytes
     actualNumBytes[0] = numBytes
 
-    Log.d(debugTag, "Preparing to copy $numBytes bytes from readBuffer. New totalBytes=$totalBytes")
+    //Log.d(debugTag, "Preparing to copy $numBytes bytes from readBuffer. New totalBytes=$totalBytes")
     /* Copy Buffer */
     for (count in 0 until numBytes) {
       buffer[count] = readBuffer[readIndex]

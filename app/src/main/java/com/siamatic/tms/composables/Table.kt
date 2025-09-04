@@ -1,5 +1,6 @@
 package com.siamatic.tms.composables
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -14,14 +15,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.defaultCustomComposable
-import com.siamatic.tms.models.viewModel.TempViewModel
+import com.siamatic.tms.models.viewModel.home.TempViewModel
 
 @Composable
-fun MainTables(viewModel: TempViewModel = viewModel()) {
-  val tableData by viewModel.tempList.collectAsState()
+fun MainTables() {
+  val context = LocalContext.current
+  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+  val tableData by tempViewModel.allTemps.collectAsState()
 
   LazyColumn(Modifier.fillMaxSize()) {
     // Headers
@@ -40,8 +45,8 @@ fun MainTables(viewModel: TempViewModel = viewModel()) {
         TableCell(text = "${index + 1}", weight = 0.1f)
         TableCell(text = defaultCustomComposable.convertLongToTime(item.createdAt).toString().split(" ")[0], weight = 0.3f)
         TableCell(text = defaultCustomComposable.convertLongToTime(item.createdAt).toString().split(" ")[1], weight = 0.2f)
-        TableCell(text = item.temp1.toString(), weight = 0.2f)
-        TableCell(text = item.temp2.toString(), weight = 0.2f)
+        TableCell(text = String.format("%.2f", item.temp1), weight = 0.2f)
+        TableCell(text = String.format("%.2f", item.temp2), weight = 0.2f)
       }
     }
   }

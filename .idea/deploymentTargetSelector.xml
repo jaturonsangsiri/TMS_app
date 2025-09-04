@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-08-28T08:42:44.079877800Z">
+        <DropdownSelection timestamp="2025-09-03T09:08:19.016501500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\TonGz ITX\.android\avd\Medium_Tablet_API_36.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=HGAGP005" />
             </handle>
           </Target>
         </DropdownSelection>

@@ -5,7 +5,6 @@ import android.graphics.Typeface
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.TextClock
@@ -43,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.siamatic.tms.R
 import com.siamatic.tms.composables.home.ProbeBox
-import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.Probe
 import com.siamatic.tms.ui.theme.BabyBlue
@@ -63,10 +61,10 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
     while(true) {
       if (checkForInternet(context)) {
         wifiIcon = R.drawable.wifi
-        Log.i(debugTag, "WIFI is connected")
+        //Log.i(debugTag, "WIFI is connected")
       } else {
         wifiIcon = R.drawable.no_wifi
-        Log.i(debugTag, "WIFI is not connect")
+        //Log.i(debugTag, "WIFI is not connect")
         Toast.makeText(context, "WIFI is not connect", Toast.LENGTH_SHORT).show()
       }
       delay(30000L) // every 30 second

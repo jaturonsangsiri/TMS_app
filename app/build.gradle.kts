@@ -3,6 +3,7 @@ plugins {
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.jetbrainsCompose)
   alias(libs.plugins.compose.compiler)
+  kotlin("kapt")
 }
 
 android {
@@ -64,8 +65,9 @@ dependencies {
   implementation(libs.converter.gson)
   implementation(libs.logging.interceptor)
   implementation(libs.gson)
-  implementation(libs.androidx.room.common.jvm)
-  implementation(libs.androidx.room.runtime.android)
+  implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.room.ktx)
+  kapt(libs.androidx.room.compiler)
 
   testImplementation(libs.junit)
   androidTestImplementation(libs.androidx.junit)

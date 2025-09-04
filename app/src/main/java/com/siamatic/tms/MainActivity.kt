@@ -1,21 +1,13 @@
 package com.siamatic.tms
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
-import android.util.Log
-import android.view.WindowManager
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.navigation.compose.rememberNavController
 
 import com.siamatic.tms.composables.DefaultCustomComposable
 import com.siamatic.tms.configs.Routes
-import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.ui.theme.TMSTheme
-import com.siamatic.tms.util.FT311UARTInterface
 
 import java.io.IOException
 

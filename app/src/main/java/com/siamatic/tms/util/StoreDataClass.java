@@ -74,7 +74,7 @@ public class StoreDataClass {
         }
         //cv.put(myDBClass.TEMP_VALUE, RecordAdj);
         cv.put(DbClass.REAL_VALUE, iTemp);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd         HH:mm:ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         cv.put(DbClass.DATE, dateFormat.format(new Date()));
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
         cv.put(DbClass.TIME, timeFormat.format(new Date()));

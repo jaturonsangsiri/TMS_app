@@ -41,12 +41,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
 import com.siamatic.tms.composables.MainTables
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.defaultCustomComposable
-import com.siamatic.tms.models.viewModel.TempViewModel
 import com.siamatic.tms.services.AlternativeDatePickerModal
 import com.siamatic.tms.services.checkDateIsBefore
 import com.siamatic.tms.services.excel.CreateExcel
@@ -60,10 +58,7 @@ import java.io.FileOutputStream
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
-fun DataTable(paddingValues: PaddingValues, viewModel: TempViewModel = viewModel()) {
-  // Get temperature from API or Local
-  viewModel.getTemperature()
-
+fun DataTable(paddingValues: PaddingValues) {
   var email by remember { mutableStateOf("ldv.rde@gmail.com") }
   var file by remember { mutableStateOf("") }
   var showModal by remember { mutableStateOf(false) }
