@@ -43,8 +43,8 @@ fun MainTables() {
     itemsIndexed(tableData) { index, item ->
       Row(modifier = Modifier.fillMaxWidth().background(if (index % 2 == 0) Color.LightGray.copy(alpha = 0.1f) else Color.Transparent)) {
         TableCell(text = "${index + 1}", weight = 0.1f)
-        TableCell(text = defaultCustomComposable.convertLongToTime(item.createdAt).toString().split(" ")[0], weight = 0.3f)
-        TableCell(text = defaultCustomComposable.convertLongToTime(item.createdAt).toString().split(" ")[1], weight = 0.2f)
+        TableCell(text = item.dateStr, weight = 0.3f)
+        TableCell(text = item.timeStr, weight = 0.2f)
         TableCell(text = String.format("%.2f", item.temp1), weight = 0.2f)
         TableCell(text = String.format("%.2f", item.temp2), weight = 0.2f)
       }

@@ -45,35 +45,35 @@ fun MessagePage(paddingValues: PaddingValues) {
   val context = LocalContext.current;
 
   Column(modifier = Modifier.padding(paddingValues).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top) {
-    Row(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.4f)) {
-      Card(modifier = Modifier.weight(0.5f).padding(10.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
-        Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
-          val isLine = remember { mutableStateOf(true) }
-          val isSMS = remember { mutableStateOf(false) }
-
-          defaultCustomComposable.BuildCheckBox("LINE", isLine.value) { isLine.value = it }
-          defaultCustomComposable.BuildCheckBox("SMS", isSMS.value) { isSMS.value = it }
-
-          Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            defaultCustomComposable.BuildButton("Phone No.1", BabyBlue, onClick = { Toast.makeText(context, "Phone1", Toast.LENGTH_SHORT).show() })
-            Spacer(modifier = Modifier.width(10.dp))
-            defaultCustomComposable.BuildButton("Phone No.2", BabyBlue, onClick = { Toast.makeText(context, "Phone2", Toast.LENGTH_SHORT).show() })
-          }
-        }
-      }
-
-      Card(
-        modifier = Modifier.weight(0.5f).padding(10.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
-        Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
-          ContentRadioBox("2.Repetition of message.", isOnetime.value, "One time", "Every", { isOnetime.value = true }, { isOnetime.value = false })
-          Row(verticalAlignment = Alignment.CenterVertically) {
-            defaultCustomComposable.BuildAddMinusControl(!isOnetime.value, { repetiMin.intValue -= 1 }, !isOnetime.value, { repetiMin.intValue += 1 }, repetiMin.intValue.toString())
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(text = "min. warning", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-          }
+    Card(
+      modifier = Modifier.weight(0.5f).padding(10.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+      Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+        ContentRadioBox("2.Repetition of message.", isOnetime.value, "One time", "Every", { isOnetime.value = true }, { isOnetime.value = false })
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          defaultCustomComposable.BuildAddMinusControl(!isOnetime.value, { repetiMin.intValue -= 1 }, !isOnetime.value, { repetiMin.intValue += 1 }, repetiMin.intValue.toString())
+          Spacer(modifier = Modifier.width(4.dp))
+          Text(text = "min. warning", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
         }
       }
     }
+    
+    //Row(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.4f)) {
+      // Card(modifier = Modifier.weight(0.5f).padding(10.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+      //   Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+      //     val isLine = remember { mutableStateOf(true) }
+      //     val isSMS = remember { mutableStateOf(false) }
+
+      //     defaultCustomComposable.BuildCheckBox("LINE", isLine.value) { isLine.value = it }
+      //     defaultCustomComposable.BuildCheckBox("SMS", isSMS.value) { isSMS.value = it }
+
+      //     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+      //       defaultCustomComposable.BuildButton("Phone No.1", BabyBlue, onClick = { Toast.makeText(context, "Phone1", Toast.LENGTH_SHORT).show() })
+      //       Spacer(modifier = Modifier.width(10.dp))
+      //       defaultCustomComposable.BuildButton("Phone No.2", BabyBlue, onClick = { Toast.makeText(context, "Phone2", Toast.LENGTH_SHORT).show() })
+      //     }
+      //   }
+      // }
+    //}
 
     Row(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
       Card(modifier = Modifier.weight(0.5f).padding(10.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {

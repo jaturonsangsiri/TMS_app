@@ -61,7 +61,6 @@ temp2Min
 temp2Over
 temp2Under
 isMute                -- boolean
-alertChannel          -- 'LINE' / 'SMS'
 status                -- 'ONLINE' / 'OFFLINE' / 'WIFI_LOST' / 'BATTERY_WEAK'
 sendMessage           --     -1  = immediately
 messageRepeat         --     -1  = oneTime 

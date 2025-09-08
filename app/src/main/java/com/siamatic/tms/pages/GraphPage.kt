@@ -2,6 +2,7 @@ package com.siamatic.tms.pages
 
 import SmoothLineChart
 import android.annotation.SuppressLint
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,36 +32,41 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.DataPoint
 import com.siamatic.tms.models.Probe
+import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.services.AlternativeDatePickerModal
 import com.siamatic.tms.services.formatDate
 
 @SuppressLint("DefaultLocale")
 @Composable
 fun GraphPage(paddingValues: PaddingValues) {
-  val probes = listOf(Probe("Probe 1", 20.0f, 46.0f, -2.0f), Probe("Probe 2", 20.0f, 30.0f, -2.0f))
+  val probes = listOf(Probe("Probe 1"), Probe("Probe 2"))
   var selectedChart by remember { mutableStateOf("Probe 1") }
   var selectedDate by remember { mutableStateOf<Long?>(System.currentTimeMillis()) }
   var showModal by remember { mutableStateOf(false) }
-  val lineData = listOf(
-    listOf(
-      DataPoint(1f, 150f), DataPoint(2f, 165f), DataPoint(3f, 142f),
-      DataPoint(4f, 178f), DataPoint(5f, 185f), DataPoint(6f, 172f),
-      DataPoint(7f, 188f), DataPoint(8f, 195f), DataPoint(9f, 203f)
-    ),
-    listOf(
-      DataPoint(1f, 20f), DataPoint(2f, 45f), DataPoint(3f, 30f),
-      DataPoint(4f, 70f), DataPoint(5f, 50f), DataPoint(6f, 85f),
-      DataPoint(7f, 65f), DataPoint(8f, 40f), DataPoint(9f, 75f)
-    )
-  )
+
+  val context = LocalContext.current
+  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+  val tableData by tempViewModel.allTemps.collectAsState()
+
+  var probe1 = mutableListOf<DataPoint>()
+  var probe2 = mutableListOf<DataPoint>()
+  for ((index, value) in tableData.withIndex()) {
+    value.temp1?.let { probe1.add(DataPoint(x = index.toFloat(), it)) }
+    value.temp2?.let { probe2.add(DataPoint(x = index.toFloat(), it)) }
+  }
+
+  val lineData = listOf(probe1, probe2)
 
   Column(modifier = Modifier
     .fillMaxSize()

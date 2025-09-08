@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TempDao {
   // Get all temp
-  @Query("SELECT * FROM `temp` WHERE createdAt ")
-  fun getAll(): Flow<List<Temp>>
+  @Query("SELECT * FROM `temp` WHERE dateStr LIKE :currentDateStr")
+  fun getAll(currentDateStr: String): Flow<List<Temp>>?
 
   // Add temp
   @Insert

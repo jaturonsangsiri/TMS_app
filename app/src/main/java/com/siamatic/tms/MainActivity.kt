@@ -9,8 +9,6 @@ import com.siamatic.tms.composables.DefaultCustomComposable
 import com.siamatic.tms.configs.Routes
 import com.siamatic.tms.ui.theme.TMSTheme
 
-import java.io.IOException
-
 val defaultCustomComposable = DefaultCustomComposable()
 
 open class MainActivity : ComponentActivity() {
@@ -32,6 +30,8 @@ open class MainActivity : ComponentActivity() {
 //  // Probe2 temperature
 //  private var fTemp2: Float? = null
 //
+
+
 //  private var tempMaxRange = 0f
 //  private var tempMinRange = 0f
 //  // Count error times getting teperature
@@ -41,28 +41,6 @@ open class MainActivity : ComponentActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-
-//    val databaseOject = DatabaseProvider.getDatabase(this)
-//    val tempDao = databaseOject.tempDao()
-//    var result = listOf<Temp>()
-//
-//    val tableData = listOf(mapOf("id" to "1as5d5aw", "temp1" to 27.5, "temp2" to 28.0), mapOf("id" to "2as5d5aw", "temp1" to 27.5, "temp2" to 28.0), mapOf("id" to "3as5d5aw", "temp1" to 27.5, "temp2" to 28.0))
-//
-//    lifecycleScope.launch {
-//      for (data in tableData) {
-//        val des = Temp(temp1 = data["temp1"].toString().toDouble(), temp2 = data["temp2"].toString().toDouble(), createdAt = System.currentTimeMillis())
-//        val result = tempDao.insertAll(des)
-//        // If result is -1 then insert failed!
-//        if (result == -1L) { // value -1 data type Long.
-//          Log.e(debugTag, "Can't insert temp id: ${data["id"]}")
-//        }
-//      }
-//
-//      result = tempDao.getAll()
-//    }
-//    for (res in result) {
-//      Log.i(debugTag, "${res.id}, date & time: ${res.createdAt.toString().split(" ")[0]} ${res.createdAt.toString().split(" ")[1]}, temp1: ${res.temp1}, temp2: ${res.temp2}");
-//    }
 
 //    uartInterface = FT311UARTInterface().apply {
 //      initUartConnection(this@MainActivity)

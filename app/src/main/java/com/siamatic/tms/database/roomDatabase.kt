@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import com.siamatic.tms.database.dao.TempDao
 
 // Setting room data table and dao
-@Database(entities = [Temp::class], version = 1, exportSchema = false)
+@Database(entities = [Temp::class], version = 2, exportSchema = false)
 abstract class AppRoomDB : RoomDatabase() {
   abstract fun tempDao(): TempDao
 }

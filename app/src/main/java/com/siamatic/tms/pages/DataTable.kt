@@ -44,12 +44,14 @@ import androidx.compose.ui.unit.sp
 import com.siamatic.tms.R
 import com.siamatic.tms.composables.MainTables
 import com.siamatic.tms.constants.debugTag
+import com.siamatic.tms.constants.specialCharStrings
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.services.AlternativeDatePickerModal
 import com.siamatic.tms.services.checkDateIsBefore
 import com.siamatic.tms.services.excel.CreateExcel
 import com.siamatic.tms.services.formatDate
 import com.siamatic.tms.ui.theme.BabyBlue
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,7 +62,7 @@ import java.io.FileOutputStream
 @Composable
 fun DataTable(paddingValues: PaddingValues) {
   var email by remember { mutableStateOf("ldv.rde@gmail.com") }
-  var file by remember { mutableStateOf("") }
+  var fileName by remember { mutableStateOf("") }
   var showModal by remember { mutableStateOf(false) }
   var showModal2 by remember { mutableStateOf(false) }
   var selectedStartDate by remember { mutableStateOf<Long?>(System.currentTimeMillis()) }
@@ -111,8 +113,8 @@ fun DataTable(paddingValues: PaddingValues) {
 
           // Email textField
           OutlinedTextField(
-            value = file,
-            onValueChange = { file = it },
+            value = fileName,
+            onValueChange = { fileName = it.replace(' ', '_') },
             label = { Text("File name") },
             placeholder = { Text("Enter your file") },
             modifier = Modifier.fillMaxWidth(),
@@ -140,22 +142,43 @@ fun DataTable(paddingValues: PaddingValues) {
                 // Run in background not in main thread
                 coroutineScope.launch(Dispatchers.IO) {
                   try {
-                    val excel = CreateExcel()
-                    excel.addCell(0, 0, "Date")
-                    excel.addCell(0, 1, "Temperature")
-                    excel.addCell(1, 0, "2025-08-29")
-                    excel.addCell(1, 1, 36.5)
+                    var fileNotAllow = false
+                    // Check for Special charecter in file name
+                    for (char in specialCharStrings) {
+                      if (fileName.contains(char)) {
+                        fileNotAllow = true
+                      }
+                    }
 
-                    val file = File(context.getExternalFilesDir(null), "temperature.xlsx")
-                    val fos = FileOutputStream(file)
-                    excel.exportToFile(fos)
-                    fos.close()
+                    if (!fileNotAllow) {
+                      val excel = CreateExcel()
+                      excel.addCell(0, 0, "Date")
+                      excel.addCell(0, 1, "Temperature")
+                      excel.addCell(1, 0, "2025-08-29")
+                      excel.addCell(1, 1, 36.5)
 
-                    withContext(Dispatchers.Main) {
-                      Toast.makeText(context, "Exported to: ${file.absolutePath}", Toast.LENGTH_SHORT).show()
-                      Log.i(debugTag, "Saved to ${file.absolutePath}")
-                      // ส่งอีเมลทันที
-                      //sendEmailWithAttachment(context, file)
+                      val outFile = File(context.getExternalFilesDir(null), "$fileName.xlsx")
+                      val fos = FileOutputStream(outFile)
+                      excel.exportToFile(fos)
+                      fos.close()
+
+                      withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                          context,
+                          "Exported to: ${outFile.absolutePath}",
+                          Toast.LENGTH_SHORT
+                        ).show()
+                        Log.i(debugTag, "Saved to ${outFile.absolutePath}")
+                        // ส่งอีเมลทันที
+                        //sendEmailWithAttachment(context, file)
+
+                        fileName = ""
+                        email = "ldv.rde@gmail.com"
+                      }
+                    } else {
+                      withContext(Dispatchers.Main) {
+                        defaultCustomComposable.showToast(context, "File name not allow")
+                      }
                     }
                   } catch (e: Exception) {
                     withContext(Dispatchers.Main) {

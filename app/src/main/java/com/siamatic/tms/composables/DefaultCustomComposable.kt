@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.siamatic.tms.R
+import com.siamatic.tms.constants.dateFormat
 import com.siamatic.tms.constants.timeFormat
 import com.siamatic.tms.ui.theme.BabyBlue
 import java.text.SimpleDateFormat
@@ -131,19 +132,21 @@ class DefaultCustomComposable {
     alertDialog.show()
   }
 
-  // To covert Long to "2025 08 28 14:35"
+  // To covert Long to "2025-08-28"
+  fun convertLongToDateOnly(time: Long): String {
+    val date = Date(time)
+    val format = SimpleDateFormat(dateFormat)
+    return format.format(date)
+  }
+
+  // To covert Long to "14:35"
   fun convertLongToTime(time: Long): String {
     val date = Date(time)
     val format = SimpleDateFormat(timeFormat)
     return format.format(date)
   }
 
-  // Get current Time in Long
-  fun currentTimeToLong(): Long {
-    return System.currentTimeMillis()
-  }
-
-  // To covert "2025 08 28 14:35" to Long
+  // To covert "2025-08-28 14:35" to Long
   fun convertDateToLong(date: String): Long {
     val df = SimpleDateFormat(timeFormat)
     return df.parse(date).time
