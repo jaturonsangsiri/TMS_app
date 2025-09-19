@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
+import com.siamatic.tms.constants.outerBoxPadding
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.DataPoint
 import com.siamatic.tms.models.Probe
@@ -68,15 +69,12 @@ fun GraphPage(paddingValues: PaddingValues) {
 
   val lineData = listOf(probe1, probe2)
 
-  Column(modifier = Modifier
-    .fillMaxSize()
-    .padding(paddingValues)) {
-    // ปุ่มสำหรับเลือกประเภทกราฟ
-    Row(modifier = Modifier
-      .fillMaxWidth()
-      .padding(bottom = 16.dp, top = 10.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-      Box(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.align(Alignment.TopStart), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+  Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+    Column(modifier = Modifier.padding(outerBoxPadding)) {
+      // ปุ่มสำหรับเลือกประเภทกราฟ
+      Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+          Row(modifier = Modifier.align(Alignment.TopStart), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             probes.forEach { probe -> defaultCustomComposable.BuildTextIconButton(
               text = probe.name,
               bgColor = if (selectedChart == probe.name) Color.Blue.copy(alpha = 0.7f) else Color.Gray,
@@ -85,39 +83,40 @@ fun GraphPage(paddingValues: PaddingValues) {
               imageVector = null,
               iconSize = 20.dp
             )
+            }
+          }
+          Text(formatDate(selectedDate), modifier = Modifier.align(Alignment.Center), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+          Button(modifier = Modifier.align(Alignment.TopEnd), shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.White), onClick = { showModal = true }) {
+            Text("Select date", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Blue.copy(alpha = 0.7f))
           }
         }
-        Text(formatDate(selectedDate), modifier = Modifier.align(Alignment.Center), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
-        Button(modifier = Modifier.align(Alignment.TopEnd), shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.White), onClick = { showModal = true }) {
-          Text("Select date", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Blue.copy(alpha = 0.7f))
+      }
+
+      if (showModal) {
+        AlternativeDatePickerModal(onDateSelected = { selectedDate = it }, onDismiss = { showModal = false })
+      }
+
+      // แสดงกราฟ
+      Card(modifier = Modifier.fillMaxHeight(0.8f)) {
+        probes.forEachIndexed { index, probe ->
+          if (selectedChart == probe.name) {
+            SmoothLineChart(data = lineData[index], modifier = Modifier.padding(16.dp), showGrid = true, lineColor = Color.Cyan)
+          }
         }
       }
-    }
 
-    if (showModal) {
-      AlternativeDatePickerModal(onDateSelected = { selectedDate = it }, onDismiss = { showModal = false })
-    }
-
-    // แสดงกราฟ
-    Card(modifier = Modifier.fillMaxHeight(0.8f)) {
-      probes.forEachIndexed { index, probe ->
-        if (selectedChart == probe.name) {
-          SmoothLineChart(data = lineData[index], modifier = Modifier.padding(16.dp), showGrid = true, lineColor = Color.Cyan)
+      Row(modifier = Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+        Row() {
+          Image(painter = painterResource(id = if (selectedChart == "Probe 1") R.drawable.graph1 else R.drawable.graph2), contentDescription = "", modifier = Modifier.size(40.dp))
+          Spacer(modifier = Modifier.width(10.dp))
+          Text("temp ${selectedChart.split(" ")[1]}", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.W600)
         }
-      }
-    }
-
-    Row(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-      Row() {
-        Image(painter = painterResource(id = if (selectedChart == "Probe 1") R.drawable.graph1 else R.drawable.graph2), contentDescription = "", modifier = Modifier.size(40.dp))
-        Spacer(modifier = Modifier.width(10.dp))
-        Text("temp ${selectedChart.split(" ")[1]}", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.W600)
-      }
-      Card( modifier = Modifier.height(60.dp).width(200.dp), colors = CardDefaults.cardColors(Color.Gray) ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-          defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.zoom_in), imageVector = null, iconSize = 30.dp)
-          defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.zoom_out), imageVector = null, iconSize = 30.dp)
-          defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.scale1), imageVector = null, iconSize = 30.dp)
+        Card( modifier = Modifier.height(60.dp).width(200.dp), colors = CardDefaults.cardColors(Color.Gray) ) {
+          Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
+            defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.zoom_in), imageVector = null, iconSize = 30.dp)
+            defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.zoom_out), imageVector = null, iconSize = 30.dp)
+            defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.scale1), imageVector = null, iconSize = 30.dp)
+          }
         }
       }
     }

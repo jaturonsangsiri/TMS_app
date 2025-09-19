@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,9 +71,12 @@ fun DataTable(paddingValues: PaddingValues) {
   val context = LocalContext.current
   val coroutineScope = rememberCoroutineScope()
 
+  // ******  For responsive ui *******
+  val isTab3 = defaultCustomComposable.getDeviceHeightPixels(context)
+
   Column(modifier = Modifier.padding(paddingValues), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
     Row {
-      Card(modifier = Modifier.weight(0.6f).height(390.dp).padding(20.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+      Card(modifier = Modifier.weight(0.6f).height(if (isTab3) 430.dp else 390.dp).padding(20.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
         MainTables()
       }
 
@@ -87,7 +91,7 @@ fun DataTable(paddingValues: PaddingValues) {
         AlternativeDatePickerModal(onDateSelected = { if (!checkDateIsBefore(selectedStartDate, selectedEndDate)) { selectedEndDate = it } }, onDismiss = { showModal2 = false })
       }
 
-      Card(modifier = Modifier.weight(0.4f).height(390.dp).padding(20.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+      Card(modifier = Modifier.weight(0.4f).height(if (isTab3) 430.dp else 390.dp).padding(20.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
         Column(modifier = Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
           // Start Date Row
           Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -135,6 +139,7 @@ fun DataTable(paddingValues: PaddingValues) {
             keyboardOptions = KeyboardOptions( keyboardType = KeyboardType.Email ),
             singleLine = true
           )
+          Spacer(modifier = Modifier.weight(1f))
 
           Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             defaultCustomComposable.BuildTextIconButton(text = "E-mail", bgColor = BabyBlue,

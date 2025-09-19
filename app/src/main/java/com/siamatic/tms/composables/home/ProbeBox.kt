@@ -22,7 +22,7 @@ import com.siamatic.tms.R
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
-fun ProbeBox(title: String, temperature: Float?, maxTemp: Float?, minTemp: Float?, modifier: Modifier = Modifier) {
+fun ProbeBox(title: String, temperature: Float?, maxTemp: Float?, minTemp: Float?, isOver: Boolean, modifier: Modifier = Modifier) {
   Card( modifier = modifier.height(250.dp).padding(10.dp), colors = CardDefaults.cardColors(Color(0xFFDEE2E6).copy(alpha = 0.50f)) ) {
     Box( modifier = Modifier.fillMaxSize() ) {
       Text(title,
@@ -31,10 +31,10 @@ fun ProbeBox(title: String, temperature: Float?, maxTemp: Float?, minTemp: Float
         fontWeight = FontWeight.Bold,
         color = Color.White.copy(alpha = 0.70f)
       )
-      TemperatureValue(temperature, Modifier.align(Alignment.Center))
+      TemperatureValue(temperature, isOver, Modifier.align(Alignment.Center))
 
       Row(modifier = Modifier.align(Alignment.TopEnd), verticalAlignment = Alignment.CenterVertically) {
-        Text(maxTemp.toString(),
+        Text(maxTemp?.toString() ?: "-",
           fontSize = 16.sp,
           fontWeight = FontWeight.Bold,
           color = colorResource(id = R.color.white70)
@@ -48,7 +48,7 @@ fun ProbeBox(title: String, temperature: Float?, maxTemp: Float?, minTemp: Float
       }
 
       Row(modifier = Modifier.align(Alignment.BottomEnd), verticalAlignment = Alignment.CenterVertically) {
-        Text(minTemp.toString(),
+        Text( minTemp?.toString() ?: "-",
           fontSize = 16.sp,
           fontWeight = FontWeight.Bold,
           color = colorResource(id = R.color.white70)

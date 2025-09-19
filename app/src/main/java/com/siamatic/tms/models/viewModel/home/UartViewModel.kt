@@ -8,6 +8,7 @@ import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.util.FT311UARTInterface
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.IOException
 
 class UartViewModel(application: Application) : AndroidViewModel(application) {
   private val readSB = ArrayList<Byte>()
@@ -15,6 +16,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
   private var handlerThread: Thread? = null
 
   private var writeBuffer = ByteArray(64)
+  private var resetBuffer = ByteArray(64)
   private var readBuffer = ByteArray(4096)
   private var actualNumBytes = IntArray(1)
 
@@ -37,6 +39,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
   private var isInit = false
 
   private var currentPageIndex: Int = 0
+  private var countTempError: Int = 0
 
   fun initUart(context: Context) {
     // Call UART init only one time
@@ -50,23 +53,31 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     val (commandBytes, commandLength) = FT311UARTInterface.prepareCommand("410D")
+    val (resetCommandBytes, resetCommandLength) = FT311UARTInterface.prepareCommand("520D")
     writeBuffer = commandBytes
+    resetBuffer = resetCommandBytes
 
     isReading = true
     handlerThread = Thread {
       while (isReading) {
         try {
-          uartInterface?.sendData(commandLength, writeBuffer)
-          Thread.sleep(1000)
-
           if (uartInterface != null) {
+            uartInterface?.sendData(commandLength, writeBuffer)
+            Thread.sleep(2000)
+
             val status = uartInterface!!.ReadData(4096, readBuffer, actualNumBytes)
             if (status && actualNumBytes[0] > 0) {
               processData()
+            } else {
+              countTempError++
             }
-          }
 
-          Thread.sleep(2000)
+            // if (countTempError % 6 == 0) {
+            //   uartInterface?.sendData(resetCommandLength, resetBuffer)
+            //   resetHardware(context)
+            // }
+            Thread.sleep(1000)
+          }
         } catch (e: Exception) {
           Log.e(debugTag, "UART error: ${e.message}")
           Thread.sleep(500)
@@ -74,6 +85,19 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
       }
     }
     handlerThread?.start()
+  }
+
+  // Function to reset hardware & reset variables in App
+  private fun resetHardware(context: Context) {
+    try {
+      uartInterface?.destroyAccessory() // Close the input / output stream and stop ReadThread
+      Thread.sleep(3000)
+      uartInterface?.initAccessory() // Re-init the Accessory
+      uartInterface?.SetConfig()     // Re config UART
+      countTempError = 0
+    } catch (error: IOException) {
+      Log.e(debugTag, "Failed to reset hardware: ${error.message}")
+    }
   }
 
   private fun processData() {
@@ -106,6 +130,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
 
   // Destroy service, background work prevent from crash
   override fun onCleared() {
+
     super.onCleared()
     isReading = false
 
@@ -114,7 +139,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
 
     uartInterface?.cleanUp()
     uartInterface = null
-    //countTempError = 0
+    countTempError = 0
 
     // clear append data Handler
     //handlerAppendData.removeCallbacksAndMessages(null)

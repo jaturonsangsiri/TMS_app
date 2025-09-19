@@ -3,6 +3,9 @@ package com.siamatic.tms.composables
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
+import android.util.DisplayMetrics
+import android.util.Log
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -30,6 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -42,18 +46,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.siamatic.tms.R
 import com.siamatic.tms.constants.dateFormat
+import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.timeFormat
 import com.siamatic.tms.ui.theme.BabyBlue
 import java.text.SimpleDateFormat
 import java.util.Date
 
 class DefaultCustomComposable {
+  private val displayMetrics = DisplayMetrics()
+
   @Composable
-  fun BuildButton(text: String, bgColor: Color, onClick: () -> Unit) {
+  fun BuildButton(text: String, isTab3: Boolean, bgColor: Color, onClick: () -> Unit) {
     Button(onClick = onClick, shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = bgColor)) {
-      Text(text)
+      Text(text = text, fontSize = if (isTab3) 15.sp else 18.sp)
     }
   }
 
@@ -97,8 +105,9 @@ class DefaultCustomComposable {
 
   @Composable
   fun RadioButtonCustom(text: String, selected: Boolean, onClick: (() -> Unit)) {
-    Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-      RadioButton(modifier = Modifier.size(24.dp).padding(0.dp), selected = !selected, onClick = onClick)
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+      RadioButton(modifier = Modifier.size(20.dp).padding(0.dp), selected = !selected, onClick = onClick, colors = RadioButtonDefaults.colors(selectedColor = BabyBlue, unselectedColor = Color.DarkGray),)
+      Spacer(modifier = Modifier.width(10.dp))
       Text(text)
     }
   }
@@ -153,7 +162,17 @@ class DefaultCustomComposable {
   }
 
   // Show Toast message
-  fun showToast(context: Context, text: String) {
-    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+  fun showToast(context: Context, message: String) {
+    android.os.Handler(android.os.Looper.getMainLooper()).post {
+      Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+  }
+
+  // Get device height if > 700 then it's Tab4 teblet. If < 700 it's Tab3 tablet
+  // True = Tab3, False = Tab4
+  fun getDeviceHeightPixels(context: Context): Boolean {
+    val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    windowManager.defaultDisplay.getMetrics(displayMetrics)
+    return displayMetrics.heightPixels < 700
   }
 }

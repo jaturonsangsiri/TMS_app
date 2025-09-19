@@ -56,7 +56,8 @@ class FT311UARTInterface() {
       when (action) {
         ACTION_USB_PERMISSION -> {
           synchronized(this) {
-            val accessory: UsbAccessory? = intent.getParcelableExtra(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+            mPermissionRequestPending = false
+            val accessory: UsbAccessory? = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY)
             if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
               if (accessory != null) {
                 getContext()?.let { context -> defaultCustomComposable.showToast(context, "Allow USB Permission") }
@@ -68,7 +69,6 @@ class FT311UARTInterface() {
             } else {
               getContext()?.let { context -> defaultCustomComposable.showToast(context, "Deny USB Permission") }
             }
-            mPermissionRequestPending = false
           }
         }
 
@@ -112,7 +112,7 @@ class FT311UARTInterface() {
       return Pair(maxTemp, minTemp)
     }
 
-      fun                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     appendData(packetData: ByteArray, readSB: MutableList<Byte>, onTemperatureCalculated: (Float?, Float?, Float, Float) -> Unit) {
+      fun appendData(packetData: ByteArray, readSB: MutableList<Byte>, onTemperatureCalculated: (Float?, Float?, Float, Float) -> Unit) {
         try {
           readSB.addAll(packetData.toList())
 
@@ -174,7 +174,7 @@ class FT311UARTInterface() {
     globalContext = WeakReference(context)
     // Get USB Lists
     usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager?
-    var accessories: Array<UsbAccessory> = usbManager!!.accessoryList
+    var accessories: Array<UsbAccessory>? = usbManager?.accessoryList
     // Check usb exist
     if (accessories != null) getContext()?.let { context -> defaultCustomComposable.showToast(context, "Accessory Attached") } else getContext()?.let { context -> defaultCustomComposable.showToast(context, "Accessory Not Attached. Please Check!") }
 
@@ -304,7 +304,7 @@ class FT311UARTInterface() {
       return 1;
     }
 
-    val accessories: Array<UsbAccessory> = usbManager!!.accessoryList
+    val accessories: Array<UsbAccessory>? = usbManager?.accessoryList
     if (accessories != null) {
       getContext()?.let { context -> defaultCustomComposable.showToast(context, "Accessory Attached") }
       Log.d(debugTag, "Accessory Attached")
@@ -334,14 +334,14 @@ class FT311UARTInterface() {
       getContext()?.let { context -> defaultCustomComposable.showToast(context, "Manufacturer, Model & Version are matched!") }
       accessoryAttached = true
 
-      if (usbManager!!.hasPermission(accessory)) {
+      if (usbManager?.hasPermission(accessory) == true) {
         openAccessory(accessory)
       } else {
         synchronized(mUsbReceiver) {
           if (!mPermissionRequestPending) {
             getContext()?.let { context -> defaultCustomComposable.showToast(context, "Request USB Permission") }
             Log.d(debugTag, "Request USB Permission")
-            usbManager!!.requestPermission(accessory, mPermissionIntent)
+            usbManager?.requestPermission(accessory, mPermissionIntent)
             mPermissionRequestPending = true
           }
         }
@@ -354,8 +354,14 @@ class FT311UARTInterface() {
   // Destroy Accessory if ACCESSORY_DETACHED
   fun destroyAccessory() {
     READ_ENABLE = false // Stop reading data
-    writeUsbData[0] = 0 // send dummy data for input stream .read going
-    sendPacket(1)
+
+    readThread?.interrupt()
+    readThread = null
+
+    try {
+      writeUsbData[0] = 0 // send dummy data for input stream .read going
+      sendPacket(1)
+    } catch (_: Exception) {}
 
     Thread.sleep(10)
     closeAccessory()
@@ -363,7 +369,7 @@ class FT311UARTInterface() {
 
   // open Accessory
   fun openAccessory(accessory: UsbAccessory) {
-    fileDescriptor = usbManager!!.openAccessory(accessory)
+    fileDescriptor = usbManager?.openAccessory(accessory)
     // can open Accessory
     if (fileDescriptor != null) {
       usbAccessory = accessory
@@ -420,7 +426,7 @@ class FT311UARTInterface() {
 
         if (instream != null) {
           try {
-            readCount = instream!!.read(usbData, 0, 1024)
+            readCount = instream?.read(usbData, 0, 1024) ?: -1
             if (readCount > 0) {
               for (count in 0 until readCount) {
                 readBuffer[writeIndex] = usbData[count]

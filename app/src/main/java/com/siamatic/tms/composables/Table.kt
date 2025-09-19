@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.viewModel.home.TempViewModel
 
 @Composable

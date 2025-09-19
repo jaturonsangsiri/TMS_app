@@ -14,12 +14,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.siamatic.tms.R
+import com.siamatic.tms.ui.theme.BabyBlue
 
 @Composable
-fun TemperatureValue(temperature: Float?, modifier: Modifier = Modifier) {
+fun TemperatureValue(temperature: Float?, isOver: Boolean, modifier: Modifier = Modifier) {
   val tem: List<String> = if (temperature != null) {
     String.format("%.2f", temperature).split(".")
   } else {
@@ -35,7 +38,7 @@ fun TemperatureValue(temperature: Float?, modifier: Modifier = Modifier) {
       tem[0],
       fontSize = 80.sp,
       fontWeight = FontWeight.Bold,
-      color = Color.White.copy(alpha = 0.7f)
+      color = if (isOver) colorResource(id = R.color.colorRedLight) else Color.White.copy(alpha = 0.7f)
     )
     Box(
       modifier = Modifier
@@ -46,14 +49,14 @@ fun TemperatureValue(temperature: Float?, modifier: Modifier = Modifier) {
         modifier = Modifier
           .size(8.dp)
           .clip(CircleShape)
-          .background(Color.White.copy(alpha = 0.7f))
+          .background(if (isOver) colorResource(id = R.color.colorRedLight) else Color.White.copy(alpha = 0.7f))
       )
     }
     Text(
       "${tem[1]}°C", // แสดงทศนิยม 2 ตำแหน่ง หรือ "--"
       fontSize = 80.sp,
       fontWeight = FontWeight.Bold,
-      color = Color.White.copy(alpha = 0.7f)
+      color = if (isOver) colorResource(id = R.color.colorRedLight) else Color.White.copy(alpha = 0.7f)
     )
   }
 }
