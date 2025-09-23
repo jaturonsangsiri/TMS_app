@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -12,6 +11,11 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.siamatic.tms.models.DataPoint
+
+import android.graphics.Paint
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun SmoothLineChart(data: List<DataPoint>, modifier: Modifier = Modifier, showGrid: Boolean = true, lineColor: Color = Color.Red, smoothness: Float = 0.3f) {
@@ -33,24 +37,37 @@ fun SmoothLineChart(data: List<DataPoint>, modifier: Modifier = Modifier, showGr
     }
 
     // คำนวณตำแหน่งจุดกราฟ
-    val points = data.map { point ->
+    val yBuffer = 0.08f // 8% ของความสูงกราฟ
+    val minYBuffered = minY - (maxY - minY) * yBuffer
+    val maxYBuffered = maxY + (maxY - minY) * yBuffer
+
+    val pointsWithData: List<Pair<DataPoint, Offset>> = data.map { point ->
       val x = padding + (point.x - minX) / (maxX - minX) * (canvasWidth - 2 * padding)
-      val y = canvasHeight - padding - (point.y - minY) / (maxY - minY) * (canvasHeight - 2 * padding)
-      Offset(x, y)
+      val y = canvasHeight - padding - (point.y - minYBuffered) / (maxYBuffered - minYBuffered) * (canvasHeight - 2 * padding)
+      point to Offset(x, y)
     }
+    // Get the only offset value
+    val points: List<Offset> = pointsWithData.map { it.second }
 
     // วาดเส้นโค้งแบบนุ่มนวล
-    drawSmoothLineChart(points, lineColor, smoothness)
+    drawSmoothLineChart(points, lineColor, smoothness, padding)
 
     // วาดจุดข้อมูล
-    drawDataPoints(points, lineColor)
+    drawDataPoints(pointsWithData, lineColor)
 
     // วาดป้ายกำกับแกน
-    drawAxisLabels(canvasWidth = canvasWidth, canvasHeight = canvasHeight, padding = padding)
+    drawAxisLabels(
+      data = data,
+      canvasWidth = canvasWidth,
+      canvasHeight = canvasHeight,
+      padding = padding,
+      minY = minYBuffered,
+      maxY = maxYBuffered
+    )
   }
 }
 
-fun DrawScope.drawSmoothLineChart(points: List<Offset>, lineColor: Color, smoothness: Float = 0.3f) {
+fun DrawScope.drawSmoothLineChart(points: List<Offset>, lineColor: Color, smoothness: Float = 0.3f, padding: Float) {
   if (points.size < 2) return
 
   val path = Path().apply {
@@ -65,11 +82,11 @@ fun DrawScope.drawSmoothLineChart(points: List<Offset>, lineColor: Color, smooth
       val nextPoint = if (i < points.size - 1) points[i + 1] else currentPoint
 
       // คำนวณจุดควบคุม
-      val controlPoint1X = previousPoint.x + (currentPoint.x - prevPrevPoint.x) * smoothness
-      val controlPoint1Y = previousPoint.y + (currentPoint.y - prevPrevPoint.y) * smoothness
+      val controlPoint1X = (previousPoint.x + (currentPoint.x - prevPrevPoint.x) * smoothness).coerceIn(padding, size.width - padding)
+      val controlPoint1Y = (previousPoint.y + (currentPoint.y - prevPrevPoint.y) * smoothness).coerceIn(padding, size.height - padding)
 
-      val controlPoint2X = currentPoint.x - (nextPoint.x - previousPoint.x) * smoothness
-      val controlPoint2Y = currentPoint.y - (nextPoint.y - previousPoint.y) * smoothness
+      val controlPoint2X = (currentPoint.x - (nextPoint.x - previousPoint.x) * smoothness).coerceIn(padding, size.width - padding)
+      val controlPoint2Y = (currentPoint.y - (nextPoint.y - previousPoint.y) * smoothness).coerceIn(padding, size.height - padding)
 
       // วาดเส้นโค้งด้วย cubic bezier
       cubicTo(
@@ -117,34 +134,50 @@ fun DrawScope.drawGrid(canvasWidth: Float, canvasHeight: Float, padding: Float) 
   }
 }
 
-fun DrawScope.drawDataPoints(points: List<Offset>, color: Color) {
-  points.forEach { point ->
+fun DrawScope.drawDataPoints(points: List<Pair<DataPoint, Offset>>, colorCircle: Color) {
+  val textPaint = Paint().apply {
+    color = android.graphics.Color.WHITE
+    textSize = 12.sp.toPx()
+    isAntiAlias = true
+  }
+  points.forEach { (data, point) ->
     drawCircle(
-      color = color,
-      radius = 6.dp.toPx(),
+      color = colorCircle,
+      radius = 7.dp.toPx(),
       center = point
     )
     drawCircle(
-      color = Color.White,
-      radius = 3.dp.toPx(),
+      color = Color(211, 211, 211),
+      radius = 4.dp.toPx(),
       center = point
     )
+
+    // Draw point
+    drawContext.canvas.nativeCanvas.drawText(data.y.toString(), point.x, point.y - 7, textPaint)
   }
 }
 
-fun DrawScope.drawAxisLabels(canvasWidth: Float, canvasHeight: Float, padding: Float) {
-  // วาดแกน X และ Y
-  drawLine(
-    color = Color.White,
-    start = Offset(padding, canvasHeight - padding),
-    end = Offset(canvasWidth - padding, canvasHeight - padding),
-    strokeWidth = 2.dp.toPx()
-  )
+fun DrawScope.drawAxisLabels(data: List<DataPoint>, canvasWidth: Float, canvasHeight: Float, padding: Float, minY: Float, maxY: Float) {
+  val textPaint = Paint().apply {
+    color = android.graphics.Color.WHITE
+    textSize = 12.sp.toPx()
+    isAntiAlias = true
+    textAlign = Paint.Align.CENTER
+  }
 
-  drawLine(
-    color = Color.White,
-    start = Offset(padding, padding),
-    end = Offset(padding, canvasHeight - padding),
-    strokeWidth = 2.dp.toPx()
-  )
+  // วาดแกน X
+  drawLine(color = Color.White, start = Offset(padding, canvasHeight - padding), end = Offset(canvasWidth - padding, canvasHeight - padding), strokeWidth = 2.dp.toPx())
+  data.forEachIndexed { index, point ->
+    val x = padding + (point.x - data.minOf { it.x }) / (data.maxOf { it.x } - data.minOf { it.x }) * (canvasWidth - 2 * padding)
+    drawContext.canvas.nativeCanvas.drawText("${index + 1}", x, canvasHeight - padding / 2, textPaint)
+  }
+
+  // วาดแกน Y
+  drawLine(color = Color.White, start = Offset(padding, padding), end = Offset(padding, canvasHeight - padding), strokeWidth = 2.dp.toPx())
+  val steps = 6
+  for (i in 0..steps) {
+    val y = canvasHeight - padding - i * (canvasHeight - 2 * padding) / steps
+    val value = minY + i * (maxY - minY) / steps
+    drawContext.canvas.nativeCanvas.drawText(String.format("%.2f", value), padding / 3, y, textPaint)
+  }
 }

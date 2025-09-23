@@ -22,11 +22,11 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
 
   private var uartInterface: FT311UARTInterface? = null
 
-    private val _fTemp1 = MutableStateFlow<Float?>(null)
-    val fTemp1 = _fTemp1.asStateFlow()
+  private val _fTemp1 = MutableStateFlow<Float?>(null)
+  val fTemp1 = _fTemp1.asStateFlow()
 
-    private val _fTemp2 = MutableStateFlow<Float?>(null)
-    val fTemp2 = _fTemp2.asStateFlow()
+  private val _fTemp2 = MutableStateFlow<Float?>(null)
+  val fTemp2 = _fTemp2.asStateFlow()
 
   private var previousFTemp1 = MutableStateFlow<Float?>(null) // previous temp1
   private var previousFTemp2 = MutableStateFlow<Float?>(null) // previous temp2
@@ -40,6 +40,8 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
 
   private var currentPageIndex: Int = 0
   private var countTempError: Int = 0
+  private val _isConnect = MutableStateFlow<Boolean?>(null)
+  val isConnect = _isConnect.asStateFlow()
 
   fun initUart(context: Context) {
     // Call UART init only one time
@@ -67,15 +69,17 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
 
             val status = uartInterface!!.ReadData(4096, readBuffer, actualNumBytes)
             if (status && actualNumBytes[0] > 0) {
+              _isConnect.value = true
               processData()
             } else {
               countTempError++
             }
 
-            // if (countTempError % 6 == 0) {
-            //   uartInterface?.sendData(resetCommandLength, resetBuffer)
-            //   resetHardware(context)
-            // }
+            // If can't get temperature 6 times
+            if (countTempError >= 6) {
+              // Update the connect icon in MainPage
+              _isConnect.value = false
+            }
             Thread.sleep(1000)
           }
         } catch (e: Exception) {
@@ -115,7 +119,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
       _tempMinRange.value = minRange
 
       // ถ้าไม่ใช่หน้า MainPage ไม่ต้อง Log
-      if (currentPageIndex != 0) return@appendData
+      //if (currentPageIndex != 0) return@appendData
 
       // Debug log เฉพาะตอนค่าเปลี่ยน
       if (temp1 != prevTemp1) Log.d(debugTag, "Temp probe1: ${String.format("%.2f", temp1)}°C")

@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -60,6 +61,7 @@ import com.siamatic.tms.constants.minOptionsLng
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.Probe
 import com.siamatic.tms.models.viewModel.home.TempViewModel
+import com.siamatic.tms.models.viewModel.home.UartViewModel
 import com.siamatic.tms.ui.theme.BabyBlue
 import com.siamatic.tms.util.checkForInternet
 import com.siamatic.tms.util.sharedPreferencesClass
@@ -72,8 +74,14 @@ import java.util.TimerTask
 
 @Composable
 fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
-  var isOutOfRange = remember { mutableStateOf(false) }
+  var isOutOfRange1 = remember { mutableStateOf(false) } // Probe1
+  var isOutOfRange2 = remember { mutableStateOf(false) } // Probe2
+
   val context = LocalContext.current
+  val uartViewModel: UartViewModel = viewModel()
+  // Check connection
+  val isConnect by uartViewModel.isConnect.collectAsState()
+
   // Painter resource for wifi icon.
   var wifiIcon by remember { mutableIntStateOf(R.drawable.no_wifi) }  // WIFI not connect
   val sharedPref = sharedPreferencesClass(context)
@@ -98,58 +106,20 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
   var previousTemp1 by remember { mutableStateOf<Float?>(null) } // previous temp1
   var previousTemp2 by remember { mutableStateOf<Float?>(null) } // previous temp2
-  val timer = Timer()
 
   // Settings alarm sound
   var isStartedAlarm = remember { mutableStateOf(false) }
   var mediaPlayer: MediaPlayer? = MediaPlayer.create(context, R.raw.alarm_sound).apply {
     setOnCompletionListener {
       isStartedAlarm.value = false
-      Log.i(debugTag, "Alarm sound complete: ${isStartedAlarm.value}")
-    }
-  }
-
-  // Timer: insert/log by RECORD_INTERVAL in SetUpDevice page
-  DisposableEffect(Unit) {
-    val tag = sharedPref.getPreference(RECORD_INTERVAL, "String", "5 minute")
-    val tempAdjust1 = sharedPref.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
-    val tempAdjust2 = sharedPref.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
-    timer.schedule(
-      object : TimerTask() {
-        override fun run() {
-          CoroutineScope(Dispatchers.Main).launch {
-            Log.d(debugTag, "tag minute: $tag")
-            Log.d(debugTag, "minOptionsLng: ${minOptionsLng[tag]} milli seconds")
-            val roundedTemp1 = fTemp1?.let { "%.2f".format(it + tempAdjust1).toFloat() }
-            val roundedTemp2 = fTemp2?.let { "%.2f".format(it + tempAdjust2).toFloat() }
-
-            if (roundedTemp1 != null || roundedTemp2 != null) {
-              tempViewModel.insertTemp(roundedTemp1 ?: 0f, roundedTemp2 ?: 0f)
-              Log.i(
-                debugTag,
-                "New temp recorded at ${
-                  defaultCustomComposable.convertLongToTime(System.currentTimeMillis())
-                }: fTemp1=${String.format("%.2f", roundedTemp1)}, fTemp2=${String.format("%.2f", roundedTemp2)}"
-              )
-              previousTemp1 = roundedTemp1
-              previousTemp2 = roundedTemp2
-            }
-          }
-        }
-      },
-      0L,
-      minOptionsLng[tag] ?: (5 * 60 * 1000L) // 5 minute default
-    )
-
-    onDispose {
-      timer.cancel() // Prevent memory leak
     }
   }
 
   LaunchedEffect(fTemp1, fTemp2) {
     val roundedTemp1 = fTemp1?.let { "%.2f".format(it).toFloat() }
     val roundedTemp2 = fTemp2?.let { "%.2f".format(it).toFloat() }
-    isOutOfRange.value = checkRangeTemperature(fTemp1, fTemp2, minTemp1, maxTemp1, minTemp2, maxTemp2)
+    isOutOfRange1.value = checkRangeTemperature(fTemp1, minTemp1, maxTemp1)
+    isOutOfRange2.value = checkRangeTemperature(fTemp2, minTemp2, maxTemp2)
 
     if ((roundedTemp1 != null || roundedTemp2 != null) && (roundedTemp1 != previousTemp1 || roundedTemp2 != previousTemp2)) {
       // อัปเดต previous
@@ -158,12 +128,10 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 
       // Check if user mute alarm
       if (isMute.value != "true") {
-        if (isOutOfRange.value) {
-          Log.i(debugTag, "Is the alarm start?: ${isStartedAlarm.value}")
+        if (isOutOfRange1.value || isOutOfRange2.value) {
           if (!isStartedAlarm.value) {
             isStartedAlarm.value = true
             mediaPlayer?.start()
-            Log.i(debugTag, "Started alarm: ${isStartedAlarm.value}")
           }
         }
       }
@@ -196,7 +164,7 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
         Image(modifier = Modifier
           .size(90.dp)
           .padding(start = 10.dp), painter = painterResource(
-          if (checkForInternet(context)) R.drawable.green_led // SerialPort connected
+          if (isConnect == true) R.drawable.green_led // SerialPort connected
           else R.drawable.red_led // SerialPort not connect
         ), contentDescription = "")
         // WIFI Status
@@ -233,8 +201,8 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 
     // Probs , temperature
     Row(modifier = Modifier.fillMaxWidth()) {
-      ProbeBox(probes[0].name, probes[0].temperature, maxTemp1, minTemp1, isOutOfRange.value, modifier = Modifier.weight(1f))
-      ProbeBox(probes[1].name, probes[1].temperature, maxTemp2, minTemp2, isOutOfRange.value, modifier = Modifier.weight(1f))
+      ProbeBox(probes[0].name, probes[0].temperature, maxTemp1, minTemp1, isOutOfRange1.value, modifier = Modifier.weight(1f))
+      ProbeBox(probes[1].name, probes[1].temperature, maxTemp2, minTemp2, isOutOfRange2.value, modifier = Modifier.weight(1f))
     }
     Spacer(modifier = Modifier.height(20.dp))
 
@@ -265,29 +233,6 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 }
 
 // Check Range If temperature is more than MaxTemp or less than MinTemp play the alarm
-fun checkRangeTemperature(fTemp1: Float?, fTemp2: Float?, minTemp1: Float?, maxTemp1: Float?, minTemp2: Float?, maxTemp2: Float?): Boolean {
-  var isOutOfRange = false
-
-  fTemp1?.let { temp1 ->
-    minTemp1?.let { minTemp ->
-      maxTemp1?.let { maxTemp ->
-        val outOfRange = (temp1 < minTemp || temp1 > maxTemp)
-        //Log.i(debugTag, "Probe1 -> $temp1 < $minTemp, $temp1 > $maxTemp")
-        if (outOfRange) isOutOfRange = true
-      }
-    }
-  }
-
-  fTemp2?.let { temp2 ->
-    minTemp2?.let { minTemp ->
-      maxTemp2?.let { maxTemp ->
-        val outOfRange = (temp2 < minTemp || temp2 > maxTemp)
-        //Log.i(debugTag, "Probe2 -> $temp2 < $minTemp, $temp2 > $maxTemp")
-        if (outOfRange) isOutOfRange = true
-      }
-    }
-  }
-
-  //Log.i(debugTag, "Final isOutOfRange = $isOutOfRange")
-  return isOutOfRange
+fun checkRangeTemperature(fTemp: Float?, minTemp: Float?, maxTemp: Float?): Boolean {
+  return if (fTemp != null && minTemp != null && maxTemp != null) fTemp!! < minTemp!! || fTemp > maxTemp!! else false
 }

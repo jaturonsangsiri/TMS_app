@@ -81,14 +81,14 @@ fun DataTable(paddingValues: PaddingValues) {
       }
 
       if (showModal) {
-        AlternativeDatePickerModal(onDateSelected = {
+        AlternativeDatePickerModal(selectedStartDate ?: 0L, onDateSelected = {
           if (!checkDateIsBefore(selectedStartDate, selectedEndDate)) {
             selectedStartDate = it
           } }, onDismiss = { showModal = false })
       }
 
       if (showModal2) {
-        AlternativeDatePickerModal(onDateSelected = { if (!checkDateIsBefore(selectedStartDate, selectedEndDate)) { selectedEndDate = it } }, onDismiss = { showModal2 = false })
+        AlternativeDatePickerModal(selectedStartDate ?: 0L, onDateSelected = { if (!checkDateIsBefore(selectedStartDate, selectedEndDate)) { selectedEndDate = it } }, onDismiss = { showModal2 = false })
       }
 
       Card(modifier = Modifier.weight(0.4f).height(if (isTab3) 430.dp else 390.dp).padding(20.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {

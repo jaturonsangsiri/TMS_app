@@ -24,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +70,10 @@ fun GraphPage(paddingValues: PaddingValues) {
 
   val lineData = listOf(probe1, probe2)
 
+  LaunchedEffect(selectedDate) {
+    selectedDate?.let { tempViewModel.loadTempsByDate(it) }
+  }
+
   Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
     Column(modifier = Modifier.padding(outerBoxPadding)) {
       // ปุ่มสำหรับเลือกประเภทกราฟ
@@ -93,14 +98,14 @@ fun GraphPage(paddingValues: PaddingValues) {
       }
 
       if (showModal) {
-        AlternativeDatePickerModal(onDateSelected = { selectedDate = it }, onDismiss = { showModal = false })
+        AlternativeDatePickerModal(selectedDate ?: 0L, onDateSelected = { selectedDate = it }, onDismiss = { showModal = false })
       }
 
       // แสดงกราฟ
       Card(modifier = Modifier.fillMaxHeight(0.8f)) {
         probes.forEachIndexed { index, probe ->
           if (selectedChart == probe.name) {
-            SmoothLineChart(data = lineData[index], modifier = Modifier.padding(16.dp), showGrid = true, lineColor = Color.Cyan)
+            SmoothLineChart(data = lineData[index], modifier = Modifier.padding(0.dp), showGrid = true, lineColor = Color.Cyan)
           }
         }
       }

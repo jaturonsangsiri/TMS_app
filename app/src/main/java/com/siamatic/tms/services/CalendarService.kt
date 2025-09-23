@@ -37,8 +37,8 @@ fun formatDate(dateMillis: Long?): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlternativeDatePickerModal(onDateSelected: (Long?) -> Unit, onDismiss: () -> Unit) {
-  val datePickerState = rememberDatePickerState()
+fun AlternativeDatePickerModal(currentDate: Long, onDateSelected: (Long?) -> Unit, onDismiss: () -> Unit) {
+  val datePickerState = rememberDatePickerState(currentDate)
 
   androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
     androidx.compose.material3.Surface(shape = RoundedCornerShape(16.dp), color = Color(0xFFA9A9A9)) {

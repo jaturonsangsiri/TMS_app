@@ -27,7 +27,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.siamatic.tms.constants.P1_ADJUST_TEMP
+import com.siamatic.tms.constants.P2_ADJUST_TEMP
+import com.siamatic.tms.constants.RECORD_INTERVAL
+import com.siamatic.tms.constants.minOptionsLng
 import com.siamatic.tms.constants.tabsName
+import com.siamatic.tms.models.viewModel.home.TempViewModel
+import com.siamatic.tms.util.sharedPreferencesClass
 import kotlinx.coroutines.launch
 
 @SuppressLint("ContextCastToActivity")
@@ -37,10 +43,15 @@ fun HomePage(controlRoute: NavHostController) {
   val pagerState = rememberPagerState(initialPage = 0, pageCount = { tabsName.size })
   val coroutineScope = rememberCoroutineScope()
   val context = LocalContext.current
+  val sharedPref = sharedPreferencesClass(context)
+
   val uartViewModel: UartViewModel = viewModel()
+  val tempViewModel: TempViewModel = viewModel()
 
   val fTemp1 by uartViewModel.fTemp1.collectAsState()
   val fTemp2 by uartViewModel.fTemp2.collectAsState()
+
+  val tag = sharedPref.getPreference(RECORD_INTERVAL, "String", "5 minute")
 
   // Call UART init only one time. Prevent call every time slide page
   LaunchedEffect(Unit) {
@@ -54,6 +65,16 @@ fun HomePage(controlRoute: NavHostController) {
   LaunchedEffect(pagerState.currentPage) {
     selectedTabIndex = pagerState.currentPage
     uartViewModel.setCurrentPage(selectedTabIndex)
+  }
+
+  LaunchedEffect(fTemp1, fTemp2) {
+    val tempAdjust1 = sharedPref.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
+    val tempAdjust2 = sharedPref.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
+    if (fTemp1 != null && fTemp2 != null) {
+      minOptionsLng[tag]?.let {
+        tempViewModel.updateTemp(fTemp1!! + tempAdjust1, fTemp2!! + tempAdjust2, it)
+      }
+    }
   }
 
   Scaffold(
