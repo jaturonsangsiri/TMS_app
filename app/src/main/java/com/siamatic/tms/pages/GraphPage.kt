@@ -64,8 +64,8 @@ fun GraphPage(paddingValues: PaddingValues) {
   var probe1 = mutableListOf<DataPoint>()
   var probe2 = mutableListOf<DataPoint>()
   for ((index, value) in tableData.withIndex()) {
-    value.temp1?.let { probe1.add(DataPoint(x = index.toFloat(), it)) }
-    value.temp2?.let { probe2.add(DataPoint(x = index.toFloat(), it)) }
+    value.temp1?.let { probe1.add(DataPoint(x = index.toFloat(), y = it, time = value.timeStr)) }
+    value.temp2?.let { probe2.add(DataPoint(x = index.toFloat(), y = it, time = value.timeStr)) }
   }
 
   val lineData = listOf(probe1, probe2)
