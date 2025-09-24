@@ -169,7 +169,7 @@ fun DrawScope.drawAxisLabels(data: List<DataPoint>, canvasWidth: Float, canvasHe
   drawLine(color = Color.White, start = Offset(padding, canvasHeight - padding), end = Offset(canvasWidth - padding, canvasHeight - padding), strokeWidth = 2.dp.toPx())
   data.forEachIndexed { index, point ->
     val x = padding + (point.x - data.minOf { it.x }) / (data.maxOf { it.x } - data.minOf { it.x }) * (canvasWidth - 2 * padding)
-    drawContext.canvas.nativeCanvas.drawText("${point.time}", x, canvasHeight - padding / 2, textPaint)
+    drawContext.canvas.nativeCanvas.drawText(point.time, x, canvasHeight - padding / 2, textPaint)
   }
 
   // วาดแกน Y
