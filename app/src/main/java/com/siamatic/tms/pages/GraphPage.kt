@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,6 +57,7 @@ fun GraphPage(paddingValues: PaddingValues) {
   var selectedChart by remember { mutableStateOf("Probe 1") }
   var selectedDate by remember { mutableStateOf<Long?>(System.currentTimeMillis()) }
   var showModal by remember { mutableStateOf(false) }
+  var zoomLevel by remember { mutableIntStateOf(1) }
 
   val context = LocalContext.current
   val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
@@ -105,7 +107,7 @@ fun GraphPage(paddingValues: PaddingValues) {
       Card(modifier = Modifier.fillMaxHeight(0.8f)) {
         probes.forEachIndexed { index, probe ->
           if (selectedChart == probe.name) {
-            SmoothLineChart(data = lineData[index], modifier = Modifier.padding(0.dp), showGrid = true, lineColor = Color.Cyan)
+            SmoothLineChart(data = lineData[index], modifier = Modifier.padding(0.dp), showGrid = true, lineColor = Color.Cyan, realZoom = zoomLevel)
           }
         }
       }
@@ -118,9 +120,15 @@ fun GraphPage(paddingValues: PaddingValues) {
         }
         Card( modifier = Modifier.height(60.dp).width(200.dp), colors = CardDefaults.cardColors(Color.Gray) ) {
           Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-            defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.zoom_in), imageVector = null, iconSize = 30.dp)
-            defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.zoom_out), imageVector = null, iconSize = 30.dp)
-            defaultCustomComposable.BuildIconButton(onClick = {}, painter = painterResource(id = R.drawable.scale1), imageVector = null, iconSize = 30.dp)
+            defaultCustomComposable.BuildIconButton(onClick = {
+              zoomLevel = (zoomLevel + 1).coerceAtMost(8)
+            }, painter = painterResource(id = R.drawable.zoom_in), imageVector = null, iconSize = 30.dp)
+            defaultCustomComposable.BuildIconButton(onClick = {
+              zoomLevel = (zoomLevel - 1).coerceAtLeast(1)
+            }, painter = painterResource(id = R.drawable.zoom_out), imageVector = null, iconSize = 30.dp)
+            defaultCustomComposable.BuildIconButton(onClick = {
+              zoomLevel = 1
+            }, painter = painterResource(id = R.drawable.scale1), imageVector = null, iconSize = 30.dp)
           }
         }
       }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -22,10 +23,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.models.viewModel.home.TempViewModel
 
 @Composable
-fun MainTables() {
+fun MainTables(startDate: Long? = 0L) {
   val context = LocalContext.current
   val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
   val tableData by tempViewModel.allTemps.collectAsState()
+
+  LaunchedEffect(startDate) {
+    startDate?.let { tempViewModel.loadTempsByDate(it) }
+  }
 
   LazyColumn(Modifier.fillMaxSize()) {
     // Headers

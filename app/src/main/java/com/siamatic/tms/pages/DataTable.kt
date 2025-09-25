@@ -1,6 +1,7 @@
 package com.siamatic.tms.pages
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -27,6 +28,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,11 +45,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
 import com.siamatic.tms.composables.MainTables
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.specialCharStrings
 import com.siamatic.tms.defaultCustomComposable
+import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.services.AlternativeDatePickerModal
 import com.siamatic.tms.services.checkDateIsBefore
 import com.siamatic.tms.services.excel.CreateExcel
@@ -71,13 +77,16 @@ fun DataTable(paddingValues: PaddingValues) {
   val context = LocalContext.current
   val coroutineScope = rememberCoroutineScope()
 
+  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+  val tableData by tempViewModel.allTemps.collectAsState()
+
   // ******  For responsive ui *******
   val isTab3 = defaultCustomComposable.getDeviceHeightPixels(context)
 
   Column(modifier = Modifier.padding(paddingValues), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
     Row {
       Card(modifier = Modifier.weight(0.6f).height(if (isTab3) 430.dp else 390.dp).padding(20.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
-        MainTables()
+        MainTables(selectedStartDate)
       }
 
       if (showModal) {
@@ -144,52 +153,57 @@ fun DataTable(paddingValues: PaddingValues) {
           Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             defaultCustomComposable.BuildTextIconButton(text = "E-mail", bgColor = BabyBlue,
               onClick = {
-                // Run in background not in main thread
-                coroutineScope.launch(Dispatchers.IO) {
-                  try {
-                    var fileNotAllow = false
-                    // Check for Special charecter in file name
-                    for (char in specialCharStrings) {
-                      if (fileName.contains(char)) {
-                        fileNotAllow = true
+                if (fileName != "") {
+                  // Run in background not in main thread
+                  coroutineScope.launch(Dispatchers.IO) {
+                    try {
+                      var fileNotAllow = false
+                      // Check for Special charecter in file name
+                      for (char in specialCharStrings) {
+                        if (fileName.contains(char)) {
+                          fileNotAllow = true
+                        }
                       }
-                    }
 
-                    if (!fileNotAllow) {
-                      val excel = CreateExcel()
-                      excel.addCell(0, 0, "Date")
-                      excel.addCell(0, 1, "Temperature")
-                      excel.addCell(1, 0, "2025-08-29")
-                      excel.addCell(1, 1, 36.5)
+                      if (!fileNotAllow) {
+                        val excel = CreateExcel()
+                        excel.addCell(0, 0, "Date")
+                        excel.addCell(0, 1, "Temperature")
 
-                      val outFile = File(context.getExternalFilesDir(null), "$fileName.xlsx")
-                      val fos = FileOutputStream(outFile)
-                      excel.exportToFile(fos)
-                      fos.close()
+                        excel.addCell(1, 0, "tableData[0].temp1")
+                        excel.addCell(1, 1, "tableData[0].temp2")
 
+                        val outFile = File(context.getExternalFilesDir(null), "$fileName.xlsx")
+                        val fos = FileOutputStream(outFile)
+                        excel.exportToFile(fos)
+                        fos.close()
+
+                        withContext(Dispatchers.Main) {
+                          Toast.makeText(
+                            context,
+                            "Exported to: ${outFile.absolutePath}",
+                            Toast.LENGTH_SHORT
+                          ).show()
+                          Log.i(debugTag, "Saved to ${outFile.absolutePath}")
+                          // ส่งอีเมลทันที
+                          //sendEmailWithAttachment(context, file)
+
+                          fileName = ""
+                          email = "ldv.rde@gmail.com"
+                        }
+                      } else {
+                        withContext(Dispatchers.Main) {
+                          defaultCustomComposable.showToast(context, "File name not allow")
+                        }
+                      }
+                    } catch (e: Exception) {
                       withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                          context,
-                          "Exported to: ${outFile.absolutePath}",
-                          Toast.LENGTH_SHORT
-                        ).show()
-                        Log.i(debugTag, "Saved to ${outFile.absolutePath}")
-                        // ส่งอีเมลทันที
-                        //sendEmailWithAttachment(context, file)
-
-                        fileName = ""
-                        email = "ldv.rde@gmail.com"
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                       }
-                    } else {
-                      withContext(Dispatchers.Main) {
-                        defaultCustomComposable.showToast(context, "File name not allow")
-                      }
-                    }
-                  } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                      Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                     }
                   }
+                } else {
+                  defaultCustomComposable.showToast(context, "Please fill file name")
                 }
               }, painter = null, imageVector = Icons.Default.Email, 20.dp)
           }

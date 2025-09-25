@@ -13,20 +13,47 @@ import androidx.compose.ui.unit.dp
 import com.siamatic.tms.models.DataPoint
 
 import android.graphics.Paint
+import android.util.Log
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import com.siamatic.tms.constants.debugTag
+import kotlin.math.ceil
+import kotlin.math.min
 
 @Composable
-fun SmoothLineChart(data: List<DataPoint>, modifier: Modifier = Modifier, showGrid: Boolean = true, lineColor: Color = Color.Red, smoothness: Float = 0.3f) {
+fun SmoothLineChart(data: List<DataPoint>, modifier: Modifier = Modifier, showGrid: Boolean = true, lineColor: Color = Color.Red, smoothness: Float = 0.3f, realZoom: Int) {
   if (data.isEmpty()) return
 
-  val minX = data.minOf { it.x }
-  val maxX = data.maxOf { it.x }
-  val minY = data.minOf { it.y }
-  val maxY = data.maxOf { it.y }
+  val zoomLength = 8
+  val zoomSize = ceil(data.size.toFloat() / zoomLength).toInt()
+  /*
+  zoom size โดยอย่างน้อยจำนวนข้อมูลต้องมากกว่าหรือเท่ากับ 9 จะเป็น x1 สมมุติ data.size = 48
+  มีจำนวน zoom 8 ช่วง
+  zoomsize = 48 / 8 = 6 จำนวนข้อมูล
+  realZoom = จำนวนซูมตอนนี้ 1-8
+  8 = x8,
+  7 = x7,
+  6 = x6,
+  5 = x5,
+  4 = x4,
+  3 = x3,
+  2 = x2,
+  1 = x1 288
+  */
+  // จำนวนข้อมูลที่จะตัดออกจากข้อมูลทั้งหมด กันไม่ให้เกิน length ข้อมูล เผื่อกรณี index น้อยกว่า 5
+  val cut = min(zoomSize * realZoom, data.size - 5)
+  //Log.i(debugTag, "data size: ${data.size} - min($zoomSize * $realZoom, ${data.size - 5}): ${data.size - min(zoomSize * realZoom, data.size - 5)}")
+  val dataGraph = if (data.size > 9) data.takeLast(data.size - cut) else data
 
-  Canvas(modifier = modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f))) {
+  val minX = dataGraph.minOf { it.x }
+  val maxX = dataGraph.maxOf { it.x }
+  val minY = dataGraph.minOf { it.y }
+  val maxY = dataGraph.maxOf { it.y }
+
+  Canvas(modifier = modifier
+    .fillMaxSize()
+    .background(Color.Black.copy(alpha = 0.6f))) {
     val canvasWidth = size.width
     val canvasHeight = size.height
     val padding = 40.dp.toPx()
@@ -41,7 +68,7 @@ fun SmoothLineChart(data: List<DataPoint>, modifier: Modifier = Modifier, showGr
     val minYBuffered = minY - (maxY - minY) * yBuffer
     val maxYBuffered = maxY + (maxY - minY) * yBuffer
 
-    val pointsWithData: List<Pair<DataPoint, Offset>> = data.map { point ->
+    val pointsWithData: List<Pair<DataPoint, Offset>> = dataGraph.map { point ->
       val x = padding + (point.x - minX) / (maxX - minX) * (canvasWidth - 2 * padding)
       val y = canvasHeight - padding - (point.y - minYBuffered) / (maxYBuffered - minYBuffered) * (canvasHeight - 2 * padding)
       point to Offset(x, y)
@@ -57,7 +84,7 @@ fun SmoothLineChart(data: List<DataPoint>, modifier: Modifier = Modifier, showGr
 
     // วาดป้ายกำกับแกน
     drawAxisLabels(
-      data = data,
+      data = dataGraph,
       canvasWidth = canvasWidth,
       canvasHeight = canvasHeight,
       padding = padding,
