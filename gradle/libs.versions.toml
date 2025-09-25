@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.0"
+androidActivation = "1.6.7"
 converterGson = "2.9.0"
 githubRepo = "Tag"
 gson = "2.10.1"
@@ -18,8 +19,10 @@ retrofit = "2.9.0"
 jitlib = "1.0.0"
 compose-plugin = "1.8.2"
 room = "2.7.2"
+sunAndroidMail = "1.6.7"
 
 [libraries]
+android-activation = { module = "com.sun.mail:android-activation", version.ref = "androidActivation" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
@@ -43,6 +46,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-navigation-compose-jvmstubs = { group = "androidx.navigation", name = "navigation-compose-jvmstubs", version.ref = "navigationComposeJvmstubs" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+sun-android-mail = { module = "com.sun.mail:android-mail", version.ref = "sunAndroidMail" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

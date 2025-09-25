@@ -44,9 +44,13 @@ android {
   }
   packaging {
     resources {
-      excludes += "/META-INF/{AL2.0,LGPL2.1}"
+      excludes += "META-INF/NOTICE.md"
+      excludes += "META-INF/LICENSE.md"
+      excludes += "META-INF/AL2.0"
+      excludes += "META-INF/LGPL2.1"
     }
   }
+
 }
 
 dependencies {
@@ -67,6 +71,11 @@ dependencies {
   implementation(libs.gson)
   implementation(libs.androidx.room.runtime)
   implementation(libs.androidx.room.ktx)
+
+  // Email library
+  implementation(libs.sun.android.mail)
+  implementation(libs.android.activation)
+
   kapt(libs.androidx.room.compiler)
   implementation("androidx.datastore:datastore-preferences:1.1.1")
 

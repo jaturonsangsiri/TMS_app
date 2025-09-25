@@ -1,9 +1,6 @@
 package com.siamatic.tms.pages
 
 import android.annotation.SuppressLint
-import android.app.Application
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,8 +25,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,30 +40,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
 import com.siamatic.tms.composables.MainTables
-import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.specialCharStrings
 import com.siamatic.tms.defaultCustomComposable
-import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.services.AlternativeDatePickerModal
+import com.siamatic.tms.services.SendEmail
 import com.siamatic.tms.services.checkDateIsBefore
-import com.siamatic.tms.services.excel.CreateExcel
 import com.siamatic.tms.services.formatDate
 import com.siamatic.tms.ui.theme.BabyBlue
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
 fun DataTable(paddingValues: PaddingValues) {
-  var email by remember { mutableStateOf("ldv.rde@gmail.com") }
+  var receiverEmail by remember { mutableStateOf("ldv.rde@gmail.com") }
   var fileName by remember { mutableStateOf("") }
   var showModal by remember { mutableStateOf(false) }
   var showModal2 by remember { mutableStateOf(false) }
@@ -77,8 +66,7 @@ fun DataTable(paddingValues: PaddingValues) {
   val context = LocalContext.current
   val coroutineScope = rememberCoroutineScope()
 
-  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
-  val tableData by tempViewModel.allTemps.collectAsState()
+  val emailSender = SendEmail()
 
   // ******  For responsive ui *******
   val isTab3 = defaultCustomComposable.getDeviceHeightPixels(context)
@@ -138,8 +126,8 @@ fun DataTable(paddingValues: PaddingValues) {
           )
 
           OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = receiverEmail,
+            onValueChange = { receiverEmail = it },
             label = { Text("Email") },
             placeholder = { Text("Enter your Email") },
             modifier = Modifier.fillMaxWidth(),
@@ -156,49 +144,30 @@ fun DataTable(paddingValues: PaddingValues) {
                 if (fileName != "") {
                   // Run in background not in main thread
                   coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                      var fileNotAllow = false
-                      // Check for Special charecter in file name
-                      for (char in specialCharStrings) {
-                        if (fileName.contains(char)) {
-                          fileNotAllow = true
-                        }
+                    var fileNotAllow = false
+                    // Check for Special charecter in file name
+                    for (char in specialCharStrings) {
+                      if (fileName.contains(char)) {
+                        fileNotAllow = true
                       }
+                    }
 
-                      if (!fileNotAllow) {
-                        val excel = CreateExcel()
-                        excel.addCell(0, 0, "Date")
-                        excel.addCell(0, 1, "Temperature")
-
-                        excel.addCell(1, 0, "tableData[0].temp1")
-                        excel.addCell(1, 1, "tableData[0].temp2")
-
-                        val outFile = File(context.getExternalFilesDir(null), "$fileName.xlsx")
-                        val fos = FileOutputStream(outFile)
-                        excel.exportToFile(fos)
-                        fos.close()
-
+                    if (!fileNotAllow) {
+                      val isSendEmail = emailSender.sendEmail(context = context, fileName = fileName, receiverEmail = receiverEmail, startDate = selectedStartDate.toString(), endDate = selectedEndDate.toString())
+                      if (isSendEmail) {
                         withContext(Dispatchers.Main) {
-                          Toast.makeText(
-                            context,
-                            "Exported to: ${outFile.absolutePath}",
-                            Toast.LENGTH_SHORT
-                          ).show()
-                          Log.i(debugTag, "Saved to ${outFile.absolutePath}")
-                          // ส่งอีเมลทันที
-                          //sendEmailWithAttachment(context, file)
-
-                          fileName = ""
-                          email = "ldv.rde@gmail.com"
+                          defaultCustomComposable.showToast(context, "Email is Send!")
                         }
+                        fileName = ""
+                        receiverEmail = "ldv.rde@gmail.com"
                       } else {
                         withContext(Dispatchers.Main) {
-                          defaultCustomComposable.showToast(context, "File name not allow")
+                          defaultCustomComposable.showToast(context, "Error in sending email.")
                         }
                       }
-                    } catch (e: Exception) {
+                    } else {
                       withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                        defaultCustomComposable.showToast(context, "File name not allow")
                       }
                     }
                   }
