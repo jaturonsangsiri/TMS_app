@@ -175,4 +175,9 @@ class DefaultCustomComposable {
     windowManager.defaultDisplay.getMetrics(displayMetrics)
     return displayMetrics.heightPixels < 700
   }
+
+  // String format "3" -> "03"
+  fun formatTwoIndex(txt: String, type: String): String {
+    return if (type == "Start") txt.padStart(2, '0') else txt.padEnd(2, '0')
+  }
 }

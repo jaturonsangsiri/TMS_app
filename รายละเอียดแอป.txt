@@ -74,4 +74,25 @@ probe2AdjustTemp
 
 
 
+SendRequest ส่งไปหา Google Sheet
+Json Object
 
+{
+   "input_type": "RealTimeRecord",
+   "machine_key": 1,
+   "machine_name": "",
+   "temp_value": "27.72",
+   "insert_time": "",
+   "sType": "",
+   "ac_status": "",
+   "machine_ip": "",
+   "prob_no": 1,
+   "chkOnline": 1,
+   "chkSms": 1,
+   "chkMail": 1,
+   "chkLine": 1,
+   "min_temp": "-1.0",
+   "max_temp": "30.0",
+   "adj_temp": "0",
+   "id": SheetId
+}

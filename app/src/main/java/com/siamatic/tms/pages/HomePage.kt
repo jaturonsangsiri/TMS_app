@@ -2,6 +2,7 @@ package com.siamatic.tms.pages
 
 import com.siamatic.tms.models.viewModel.home.UartViewModel
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -27,9 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.siamatic.tms.constants.DEVICE_ID
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
 import com.siamatic.tms.constants.RECORD_INTERVAL
+import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.minOptionsLng
 import com.siamatic.tms.constants.tabsName
 import com.siamatic.tms.models.viewModel.home.TempViewModel

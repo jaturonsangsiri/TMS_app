@@ -1,6 +1,7 @@
 package com.siamatic.tms.pages
 
 import android.annotation.SuppressLint
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,10 +42,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
 import com.siamatic.tms.composables.MainTables
 import com.siamatic.tms.constants.specialCharStrings
 import com.siamatic.tms.defaultCustomComposable
+import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.services.AlternativeDatePickerModal
 import com.siamatic.tms.services.SendEmail
 import com.siamatic.tms.services.checkDateIsBefore
@@ -65,6 +70,9 @@ fun DataTable(paddingValues: PaddingValues) {
   var selectedEndDate by remember { mutableStateOf<Long?>(System.currentTimeMillis()) }
   val context = LocalContext.current
   val coroutineScope = rememberCoroutineScope()
+
+  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+  val tempData = tempViewModel.allTemps.collectAsState()
 
   val emailSender = SendEmail()
 
@@ -153,7 +161,7 @@ fun DataTable(paddingValues: PaddingValues) {
                     }
 
                     if (!fileNotAllow) {
-                      val isSendEmail = emailSender.sendEmail(context = context, fileName = fileName, receiverEmail = receiverEmail, startDate = selectedStartDate.toString(), endDate = selectedEndDate.toString())
+                      val isSendEmail = emailSender.sendEmail(context = context, data = tempData.value, fileName = fileName, receiverEmail = receiverEmail, startDate = selectedStartDate.toString(), endDate = selectedEndDate.toString())
                       if (isSendEmail) {
                         withContext(Dispatchers.Main) {
                           defaultCustomComposable.showToast(context, "Email is Send!")
