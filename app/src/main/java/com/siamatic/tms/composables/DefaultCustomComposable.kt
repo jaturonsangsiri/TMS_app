@@ -3,6 +3,10 @@ package com.siamatic.tms.composables
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
+import android.content.pm.PackageManager
+import android.net.wifi.WifiManager
+import android.os.Environment
+import android.text.format.Formatter
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.WindowManager
@@ -49,45 +53,95 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.siamatic.tms.R
 import com.siamatic.tms.constants.dateFormat
-import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.timeFormat
 import com.siamatic.tms.ui.theme.BabyBlue
+import org.json.JSONObject
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.net.NetworkInterface
+import java.net.InetAddress
+import java.util.Collections
 
 class DefaultCustomComposable {
   private val displayMetrics = DisplayMetrics()
 
   @Composable
   fun BuildButton(text: String, isTab3: Boolean, bgColor: Color, onClick: () -> Unit) {
-    Button(onClick = onClick, shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = bgColor)) {
+    Button(
+      onClick = onClick,
+      shape = RoundedCornerShape(10.dp),
+      colors = ButtonDefaults.buttonColors(containerColor = bgColor)
+    ) {
       Text(text = text, fontSize = if (isTab3) 15.sp else 18.sp)
     }
   }
 
   @Composable
-  fun BuildIconButton(onClick: () -> Unit, painter: Painter?, imageVector: ImageVector?, iconSize: Dp) {
+  fun BuildIconButton(
+    onClick: () -> Unit,
+    painter: Painter?,
+    imageVector: ImageVector?,
+    iconSize: Dp
+  ) {
     IconButton(onClick = onClick) {
-      Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+      Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+      ) {
         if (imageVector != null) {
-          Icon(modifier = Modifier.size(20.dp), tint = Color.White, imageVector = Icons.Default.Email, contentDescription = "")
+          Icon(
+            modifier = Modifier.size(20.dp),
+            tint = Color.White,
+            imageVector = Icons.Default.Email,
+            contentDescription = ""
+          )
         }
         if (painter != null) {
-          Icon(modifier = Modifier.size(iconSize), tint = Color.White, painter = painter, contentDescription = "")
+          Icon(
+            modifier = Modifier.size(iconSize),
+            tint = Color.White,
+            painter = painter,
+            contentDescription = ""
+          )
         }
       }
     }
   }
 
   @Composable
-  fun BuildTextIconButton(text: String, bgColor: Color, onClick: () -> Unit, painter: Painter?, imageVector: ImageVector?, iconSize: Dp) {
-    Button( onClick = onClick, shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = bgColor)) {
-      Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+  fun BuildTextIconButton(
+    text: String,
+    bgColor: Color,
+    onClick: () -> Unit,
+    painter: Painter?,
+    imageVector: ImageVector?,
+    iconSize: Dp
+  ) {
+    Button(
+      onClick = onClick,
+      shape = RoundedCornerShape(10.dp),
+      colors = ButtonDefaults.buttonColors(containerColor = bgColor)
+    ) {
+      Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+      ) {
         if (imageVector != null) {
-          Icon(modifier = Modifier.size(20.dp), tint = Color.White, imageVector = Icons.Default.Email, contentDescription = "")
+          Icon(
+            modifier = Modifier.size(20.dp),
+            tint = Color.White,
+            imageVector = Icons.Default.Email,
+            contentDescription = ""
+          )
         }
         if (painter != null) {
-          Icon(modifier = Modifier.size(iconSize), tint = Color.White, painter = painter, contentDescription = "")
+          Icon(
+            modifier = Modifier.size(iconSize),
+            tint = Color.White,
+            painter = painter,
+            contentDescription = ""
+          )
         }
         Spacer(Modifier.width(8.dp))
         Text(text)
@@ -97,8 +151,15 @@ class DefaultCustomComposable {
 
   @Composable
   fun BuildCheckBox(text: String, checker: Boolean, onCheckedChange: ((Boolean) -> Unit)) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp)) {
-      Checkbox(modifier = Modifier.size(24.dp).padding(0.dp), checked = checker, onCheckedChange = onCheckedChange, interactionSource = remember { MutableInteractionSource() })
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.padding(bottom = 10.dp)
+    ) {
+      Checkbox(
+        modifier = Modifier.size(24.dp).padding(0.dp),
+        checked = checker,
+        onCheckedChange = onCheckedChange,
+        interactionSource = remember { MutableInteractionSource() })
       Text(text = text, modifier = Modifier.padding(start = 4.dp))
     }
   }
@@ -106,27 +167,75 @@ class DefaultCustomComposable {
   @Composable
   fun RadioButtonCustom(text: String, selected: Boolean, onClick: (() -> Unit)) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-      RadioButton(modifier = Modifier.size(20.dp).padding(0.dp), selected = !selected, onClick = onClick, colors = RadioButtonDefaults.colors(selectedColor = BabyBlue, unselectedColor = Color.DarkGray),)
+      RadioButton(
+        modifier = Modifier.size(20.dp).padding(0.dp),
+        selected = !selected,
+        onClick = onClick,
+        colors = RadioButtonDefaults.colors(
+          selectedColor = BabyBlue,
+          unselectedColor = Color.DarkGray
+        ),
+      )
       Spacer(modifier = Modifier.width(10.dp))
       Text(text)
     }
   }
 
   @Composable
-  fun BuildAddMinusControl(plusEnable: Boolean, plusClick: () -> Unit, minusEnable: Boolean, minusClick: () -> Unit, value: String) {
-    Card(onClick = plusClick, modifier = Modifier.size(36.dp), enabled = plusEnable, colors = CardDefaults.cardColors(containerColor = BabyBlue, disabledContainerColor = Color.Gray)) {
+  fun BuildAddMinusControl(
+    plusEnable: Boolean,
+    plusClick: () -> Unit,
+    minusEnable: Boolean,
+    minusClick: () -> Unit,
+    value: String
+  ) {
+    Card(
+      onClick = plusClick,
+      modifier = Modifier.size(36.dp),
+      enabled = plusEnable,
+      colors = CardDefaults.cardColors(
+        containerColor = BabyBlue,
+        disabledContainerColor = Color.Gray
+      )
+    ) {
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Icon(painter = painterResource(id = R.drawable.minus), contentDescription = "Decrease", modifier = Modifier.size(16.dp), tint = Color.White)
+        Icon(
+          painter = painterResource(id = R.drawable.minus),
+          contentDescription = "Decrease",
+          modifier = Modifier.size(16.dp),
+          tint = Color.White
+        )
       }
     }
     Spacer(modifier = Modifier.width(10.dp))
-    OutlinedCard(modifier = Modifier.widthIn(min = 48.dp), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
-      Text(text = value, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+    OutlinedCard(
+      modifier = Modifier.widthIn(min = 48.dp),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+      Text(
+        text = value,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        textAlign = TextAlign.Center
+      )
     }
     Spacer(modifier = Modifier.width(10.dp))
-    Card(onClick = minusClick, modifier = Modifier.size(36.dp), enabled = minusEnable, colors = CardDefaults.cardColors(containerColor = BabyBlue, disabledContainerColor = Color.Gray)) {
+    Card(
+      onClick = minusClick,
+      modifier = Modifier.size(36.dp),
+      enabled = minusEnable,
+      colors = CardDefaults.cardColors(
+        containerColor = BabyBlue,
+        disabledContainerColor = Color.Gray
+      )
+    ) {
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", modifier = Modifier.size(16.dp), tint = Color.White)
+        Icon(
+          imageVector = Icons.Default.Add,
+          contentDescription = "Increase",
+          modifier = Modifier.size(16.dp),
+          tint = Color.White
+        )
       }
     }
   }
@@ -179,5 +288,35 @@ class DefaultCustomComposable {
   // String format "3" -> "03"
   fun formatTwoIndex(txt: String, type: String): String {
     return if (type == "Start") txt.padStart(2, '0') else txt.padEnd(2, '0')
+  }
+
+  // Get device address ip
+  fun getDeviceIP(): String? {
+    try {
+      val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+      for (intf in interfaces) {
+        val addrs = Collections.list(intf.inetAddresses)
+        for (addr in addrs) {
+          if (!addr.isLoopbackAddress && addr is InetAddress) {
+            val ip = addr.hostAddress
+            // กรอง IPv4
+            if (ip.indexOf(':') < 0) return ip
+          }
+        }
+      }
+    } catch (ex: Exception) {
+      ex.printStackTrace()
+    }
+    return null
+  }
+
+  // Get device config
+  fun loadConfig(context: Context): JSONObject {
+    val dir = File(context.getExternalFilesDir(null), "TMS")
+    if (!dir.exists()) dir.mkdirs()
+
+    val configFile = File(dir, "DeviceConfig.json")
+    val jsonTxt = configFile.bufferedReader().use { it.readText() }
+    return JSONObject(jsonTxt)
   }
 }

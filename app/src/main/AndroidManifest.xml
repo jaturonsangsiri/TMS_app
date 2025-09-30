@@ -11,7 +11,8 @@
     <uses-permission android:name="android.permission.USB_PERMISSION" />
     <uses-feature android:name="android.hardware.usb.accessory" />
 
-    <!-- Write file, create excel file -->
+    <!-- Read file, Write file, create excel file -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application

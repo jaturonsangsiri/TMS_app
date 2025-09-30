@@ -1,4 +1,4 @@
-package com.siamatic.tms.models
+package com.siamatic.tms.models.viewModel.login
 
 data class LoginResponse(
   val success: Boolean,

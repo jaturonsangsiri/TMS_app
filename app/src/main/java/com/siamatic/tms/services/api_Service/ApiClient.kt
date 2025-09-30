@@ -11,7 +11,8 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 object ApiClient {
-  private const val BASE_URL = "https://tms.siamatic.co.th/smtrack/"
+  //private const val BASE_URL = "https://tms.siamatic.co.th/smtrack/"
+  private const val BASE_URL = "https://script.google.com/macros/s/AKfycbxKMCRWkcKk85YxP2gezDCRWKDXLDsnigRhnaevU5QknIhJVpcf6MqbE4ctKsCCqBESFw/"
 
   // สำหรับการ Development - ใช้ Self-signed Certificate
   private fun getDevelopHttpClient(): OkHttpClient {

@@ -1,8 +1,8 @@
 package com.siamatic.tms.repository
 
-import com.siamatic.tms.models.LoginRequest
+import com.siamatic.tms.models.viewModel.login.LoginRequest
 import com.siamatic.tms.services.api_Service.ApiClient
-import com.siamatic.tms.models.LoginResponse
+import com.siamatic.tms.models.viewModel.login.LoginResponse
 
 class AuthRepository {
   private val apiService = ApiClient.apiService

@@ -8,6 +8,7 @@ import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.database.Temp
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.util.sharedPreferencesClass
+import org.json.JSONObject
 import java.io.File
 import java.util.Properties
 import javax.activation.DataHandler
@@ -32,6 +33,7 @@ class SendEmail {
     val prefev = sharedPreferencesClass(context)
     password = prefev.getPreference(EMAIL_PASSWORD, "String", "").toString()
     deviceId = prefev.getPreference(DEVICE_ID, "String", "").toString()
+    Log.d(debugTag, "email pass: $password, device id: $deviceId")
     if (password != "" && deviceId != "") {
       try {
         val mailProperties: Properties = System.getProperties()

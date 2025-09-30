@@ -18,6 +18,8 @@ const val dateFormat = "yyyy-MM-dd"
 val specialCharStrings: List<String> = listOf("/", "\\", ":", "*", "?", "\"", "<", ">")
 
 // All keys in preference
+const val WIFI_NAME = "WIFI_NAME"
+const val WIFI_PASSWORD = "WIFI_PASSWORD"
 const val DEVICE_ID = "SN_DEVICE_KEY"
 const val DEVICE_NAME1 = "DEVICE_NAME1"
 const val DEVICE_NAME2 = "DEVICE_NAME2"
@@ -38,6 +40,9 @@ const val SERIAL_NO = "SERIAL_NO"
 const val P1_ADJUST_TEMP = "P1_ADJUST_TEMP"
 const val P2_ADJUST_TEMP = "P2_ADJUST_TEMP"
 const val EMAIL_PASSWORD = "EMAIL_PASSWORD"
+
+// Google Sheet ID
+const val SHEET_ID = "SHEET_ID"
 
 
 /*** For Styling ***/

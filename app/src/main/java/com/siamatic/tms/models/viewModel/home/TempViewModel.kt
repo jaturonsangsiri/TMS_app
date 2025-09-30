@@ -3,12 +3,23 @@ package com.siamatic.tms.models.viewModel.home
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import com.siamatic.tms.constants.DEVICE_ID
+import com.siamatic.tms.constants.P1_ADJUST_TEMP
+import com.siamatic.tms.constants.P2_ADJUST_TEMP
+import com.siamatic.tms.constants.SHEET_ID
+import com.siamatic.tms.constants.TEMP_MAX_P1
+import com.siamatic.tms.constants.TEMP_MAX_P2
+import com.siamatic.tms.constants.TEMP_MIN_P1
+import com.siamatic.tms.constants.TEMP_MIN_P2
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.database.DatabaseProvider
 import com.siamatic.tms.database.Temp
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.Probe
+import com.siamatic.tms.models.viewModel.GoogleSheetViewModel
+import com.siamatic.tms.util.sharedPreferencesClass
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +30,9 @@ import java.util.TimerTask
 
 // Model to menage temperature 
 class TempViewModel(application: Application): AndroidViewModel(application) {
+  private val prePref = sharedPreferencesClass(application)
+  private val googleViewModel = GoogleSheetViewModel()
+
   private val tempDao = DatabaseProvider.getDatabase(application).tempDao()
   private val timer = Timer()
   // Flow สำหรับรับค่า temp ล่าสุด
@@ -57,6 +71,16 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   // Timer to save temperature to database (default 5 minutes)
   private fun startTempTimer() {
     timer.schedule(object: TimerTask() {
+      val serialNumber = prePref.getPreference(DEVICE_ID, "String", "").toString()
+      val sheetId = prePref.getPreference(SHEET_ID, "String", "").toString()
+      val maxTemp1 = prePref.getPreference(TEMP_MAX_P1, "Float", 22f).toString().toFloat()
+      val minTemp1 = prePref.getPreference(TEMP_MIN_P1, "Float", 0f).toString().toFloat()
+      val maxTemp2 = prePref.getPreference(TEMP_MAX_P2, "Float", 22f).toString().toFloat()
+      val minTemp2 = prePref.getPreference(TEMP_MIN_P2, "Float", 0f).toString().toFloat()
+      val adjTemp1 = prePref.getPreference(P1_ADJUST_TEMP, "Float", -1.0f).toString().toFloatOrNull() ?: -1.0f
+      val adjTemp2 = prePref.getPreference(P2_ADJUST_TEMP, "Float", -1.0f).toString().toFloatOrNull() ?: -1.0f
+      val ipAddress = defaultCustomComposable.getDeviceIP().toString()
+
       override fun run() {
         viewModelScope.launch(Dispatchers.IO) {
           val (fTemp1, fTemp2) = _latestTemp.value
@@ -66,11 +90,34 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
 
           if (roundedTemp1 != null || roundedTemp2 != null) {
             insertTemp(roundedTemp1 ?: 0f, roundedTemp2 ?: 0f)
-            Log.i(debugTag, "New temp recorded at ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}: fTemp1=${String.format("%.2f", roundedTemp1)}, fTemp2=${String.format("%.2f", roundedTemp2)}")
+            googleViewModel.addTemperatureToGoogleSheet(
+              sheetId = sheetId,
+              serialNumber = serialNumber,
+              probe = "Probe 1",
+              temp = roundedTemp1 ?: 0f,
+              acStatus = "connect",
+              machineIP = ipAddress,
+              minTemp = minTemp1,
+              maxTemp = maxTemp1,
+              adjTemp = adjTemp1
+            )
+            googleViewModel.addTemperatureToGoogleSheet(
+              sheetId = sheetId,
+              serialNumber = serialNumber,
+              probe = "Probe 2",
+              temp = roundedTemp2 ?: 0f,
+              acStatus = "connect",
+              machineIP = ipAddress,
+              minTemp = minTemp2,
+              maxTemp = maxTemp2,
+              adjTemp = adjTemp2
+            )
+            Log.i(debugTag, "New temp recorded at ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}: fTemp1=$roundedTemp1, fTemp2=$roundedTemp2")
           }
         } 
       }
-    }, 0, _interval.value)
+    }, 0, _interval.value
+    )
   }
 
   override fun onCleared() {
