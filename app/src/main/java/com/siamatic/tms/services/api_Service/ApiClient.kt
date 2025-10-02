@@ -12,7 +12,7 @@ import javax.net.ssl.X509TrustManager
 
 object ApiClient {
   //private const val BASE_URL = "https://tms.siamatic.co.th/smtrack/"
-  private const val BASE_URL = "https://script.google.com/macros/s/AKfycbxKMCRWkcKk85YxP2gezDCRWKDXLDsnigRhnaevU5QknIhJVpcf6MqbE4ctKsCCqBESFw/"
+  private const val BASE_URL = "https://script.google.com/macros/s/AKfycbzS3G1hjIbVhsgnVDyb5GsZD90bXedlvgIGIgbxFdzw1sGwp3e-KJ9JVFxUAy8TMewNyQ/"
 
   // สำหรับการ Development - ใช้ Self-signed Certificate
   private fun getDevelopHttpClient(): OkHttpClient {

@@ -132,19 +132,17 @@ class FT311UARTInterface() {
 
             fun parseTemp(high: Byte, low: Byte): Int = ((high.toInt() and 0xFF) shl 8) or (low.toInt() and 0xFF)
 
-            //Log.d(debugTag, "packet[5]: ${packet[5]}, packet[6]: ${packet[6]}")
+            Log.d(debugTag, "packet[5]: ${packet[5]}, packet[6]: ${packet[6]}, packet[8]: ${packet[8]}, packet[9]: ${packet[9]}")
             val iTemp1 = parseTemp(packet[5], packet[6])
             val iTemp2 = parseTemp(packet[8], packet[9])
             //Log.d(debugTag, "iTemp1: $iTemp1, iTemp2: $iTemp2")
 
             if (iTemp1 != 0xFFFF) fTemp1 = calculateTemperature(sensorType, iTemp1)
             if (iTemp2 != 0xFFFF) fTemp2 = calculateTemperature(sensorType, iTemp2)
-
-            repeat(packet.size) { readSB.removeAt(0) }
           }
 
-          //Log.d(debugTag, "Temp probe1: ${fTemp1 ?: "⚠ Not found"} °C")
-          //Log.d(debugTag, "Temp probe2: ${fTemp2 ?: "⚠ Not found"} °C")
+          Log.d(debugTag, "Temp probe1: ${fTemp1 ?: "⚠ Not found"} °C")
+          Log.d(debugTag, "Temp probe2: ${fTemp2 ?: "⚠ Not found"} °C")
           //Log.d(debugTag, "Range: $tempMinRange°C ~ $tempMaxRange°C")
 
           // ส่งผลกลับผ่าน callback
@@ -165,7 +163,13 @@ class FT311UARTInterface() {
       val endIndex = startIndex + 11
       if (buffer[endIndex] != 0x0D.toByte()) return null
 
-      return buffer.subList(startIndex, startIndex + 12).toByteArray()
+      // ดึง packet
+      val packet = buffer.subList(startIndex, startIndex + 12).toByteArray()
+
+      // ลบออกจาก buffer
+      repeat(startIndex + 12) { buffer.removeAt(0) }
+
+      return packet
     }
 
     const val MAX_BYTES = 65536

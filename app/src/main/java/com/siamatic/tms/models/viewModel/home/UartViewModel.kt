@@ -122,8 +122,8 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
       //if (currentPageIndex != 0) return@appendData
 
       // Debug log เฉพาะตอนค่าเปลี่ยน
-      if (temp1 != prevTemp1) Log.d(debugTag, "Temp probe1: ${String.format("%.2f", temp1)}°C")
-      if (temp2 != prevTemp2) Log.d(debugTag, "Temp probe2: ${String.format("%.2f", temp2)}°C")
+      //if (temp1 != prevTemp1) Log.d(debugTag, "Temp probe1: ${String.format("%.2f", temp1)}°C")
+      //if (temp2 != prevTemp2) Log.d(debugTag, "Temp probe2: ${String.format("%.2f", temp2)}°C")
     }
   }
 
