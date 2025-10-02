@@ -16,6 +16,7 @@ import com.siamatic.tms.configs.SerialConfig.PARITY
 import com.siamatic.tms.configs.SerialConfig.STOP_BIT
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.defaultCustomComposable
+import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.services.BufferRead
 
 import java.io.FileInputStream
@@ -445,7 +446,9 @@ class FT311UARTInterface() {
               break // or handle accordingly
             }
           } catch (e: IOException) {
-            Log.e(debugTag, "Read failed", e)
+            Log.e(debugTag, "USB disconnected", e)
+            destroyAccessory()
+            break
           }
         }
       }

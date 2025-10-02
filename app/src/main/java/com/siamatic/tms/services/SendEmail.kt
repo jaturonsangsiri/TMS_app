@@ -4,6 +4,12 @@ import android.content.Context
 import android.util.Log
 import com.siamatic.tms.constants.DEVICE_ID
 import com.siamatic.tms.constants.EMAIL_PASSWORD
+import com.siamatic.tms.constants.P1_ADJUST_TEMP
+import com.siamatic.tms.constants.P2_ADJUST_TEMP
+import com.siamatic.tms.constants.TEMP_MAX_P1
+import com.siamatic.tms.constants.TEMP_MAX_P2
+import com.siamatic.tms.constants.TEMP_MIN_P1
+import com.siamatic.tms.constants.TEMP_MIN_P2
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.database.Temp
 import com.siamatic.tms.defaultCustomComposable
@@ -29,10 +35,18 @@ class SendEmail {
   private var deviceId = ""
   private val mailHost = "smtp.gmail.com"
 
+
   fun sendEmail(context: Context, data: List<Temp>, fileName: String, receiverEmail: String, startDate: String, endDate: String): Boolean {
     val prefev = sharedPreferencesClass(context)
     password = prefev.getPreference(EMAIL_PASSWORD, "String", "").toString()
     deviceId = prefev.getPreference(DEVICE_ID, "String", "").toString()
+    val maxTemp1 = prefev.getPreference(TEMP_MAX_P1, "Float", 22f).toString().toFloat()
+    val minTemp1 = prefev.getPreference(TEMP_MIN_P1, "Float", 0f).toString().toFloat()
+    val maxTemp2 = prefev.getPreference(TEMP_MAX_P2, "Float", 22f).toString().toFloat()
+    val minTemp2 = prefev.getPreference(TEMP_MIN_P2, "Float", 0f).toString().toFloat()
+    val adjTemp1 = prefev.getPreference(P1_ADJUST_TEMP, "Float", -1.0f).toString().toFloatOrNull() ?: -1.0f
+    val adjTemp2 = prefev.getPreference(P2_ADJUST_TEMP, "Float", -1.0f).toString().toFloatOrNull() ?: -1.0f
+    val ipAddress = defaultCustomComposable.getDeviceIP().toString()
     Log.d(debugTag, "email pass: $password, device id: $deviceId")
     if (password != "" && deviceId != "") {
       try {
@@ -66,15 +80,12 @@ class SendEmail {
         val csvFile = File(context.getExternalFilesDir(null), "$fileName.csv")
         csvFile.bufferedWriter().use { csv ->
           // header row
-          csv.write("No.,Serial Number,Time,Temp 1,Temp 2")
+          csv.write("No.,Serial Number,IP Address,Temp 1,Status 1,Min Temp 1,Max Temp 1,Adjust Temp 1,Temp 2,Status 2,Min Temp 2,Max Temp 2,Adjust Temp 2,Time")
           csv.newLine()
 
           // data rows
           data.forEachIndexed { index, value ->
-            val timeString = value.timeStr.split(":")
-            val temp1 = value.temp1.toString().split(".")
-            val temp2 = value.temp2.toString().split(".")
-            val txt = "${index + 1},$deviceId,${defaultCustomComposable.formatTwoIndex(timeString[0], "Start")}:${defaultCustomComposable.formatTwoIndex(timeString[1], "End")},${defaultCustomComposable.formatTwoIndex(temp1[0], "Start")}.${defaultCustomComposable.formatTwoIndex(temp1[1], "End")},${defaultCustomComposable.formatTwoIndex(temp2[0], "Start")}.${defaultCustomComposable.formatTwoIndex(temp2[1], "End")}"
+            val txt = "${index + 1},$deviceId,$ipAddress,${value.temp1},${defaultCustomComposable.checkTempOutOfRange(value.temp1.toString().toFloat(), minTemp1, maxTemp1)},$minTemp1,$maxTemp1,$adjTemp1,${value.temp2},${defaultCustomComposable.checkTempOutOfRange(value.temp2.toString().toFloat(), minTemp2, maxTemp2)},$minTemp2,$maxTemp2,$adjTemp2,${value.timeStr}"
             //Log.i(debugTag, "Line: $txt")
             csv.write(txt)
             csv.newLine()

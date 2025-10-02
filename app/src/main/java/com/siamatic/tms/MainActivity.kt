@@ -1,6 +1,7 @@
 package com.siamatic.tms
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
@@ -19,23 +20,27 @@ open class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
 
     // Lock Task Mode (Kiosk)
-    startLockTask()
+    //startLockTask()
 
     // FullScreen and hide bottom & top system bars
-    WindowCompat.setDecorFitsSystemWindows(window, false)
-    val controller = WindowInsetsControllerCompat(window, window.decorView)
-    controller.hide(WindowInsetsCompat.Type.systemBars())
-    controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+//    WindowCompat.setDecorFitsSystemWindows(window, false)
+//    val controller = WindowInsetsControllerCompat(window, window.decorView)
+//    controller.hide(WindowInsetsCompat.Type.systemBars())
+//    controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+    // Keep the screen on
+    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
 
     // Open Immersive Sticky
-    window.decorView.systemUiVisibility = (
-       android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-       or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
-       or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-       or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-       or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-       or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-    )
+//    window.decorView.systemUiVisibility = (
+//       android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+//       or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+//       or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+//       or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//       or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+//       or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//    )
 
     setContent {
       TMSTheme {
@@ -45,18 +50,18 @@ open class MainActivity : ComponentActivity() {
     }
   }
 
-  override fun onWindowFocusChanged(hasFocus: Boolean) {
-    super.onWindowFocusChanged(hasFocus)
-    if (hasFocus) {
-      // Reset Immersive Sticky
-      window.decorView.systemUiVisibility = (
-              android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                      or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
-                      or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                      or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                      or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                      or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-              )
-    }
-  }
+//  override fun onWindowFocusChanged(hasFocus: Boolean) {
+//    super.onWindowFocusChanged(hasFocus)
+//    if (hasFocus) {
+//      // Reset Immersive Sticky
+//      window.decorView.systemUiVisibility = (
+//              android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+//                      or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+//                      or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+//                      or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                      or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+//                      or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//              )
+//    }
+//  }
 }

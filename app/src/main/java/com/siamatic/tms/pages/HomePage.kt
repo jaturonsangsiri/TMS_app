@@ -29,12 +29,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.siamatic.tms.constants.DEVICE_ID
+import com.siamatic.tms.constants.EMAIL_PASSWORD
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
 import com.siamatic.tms.constants.RECORD_INTERVAL
+import com.siamatic.tms.constants.SHEET_ID
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.minOptionsLng
 import com.siamatic.tms.constants.tabsName
+import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.util.sharedPreferencesClass
 import kotlinx.coroutines.launch
@@ -61,6 +64,16 @@ fun HomePage(controlRoute: NavHostController) {
     // Reset data for debug (record to many)
     //tempViewModel.resetData()
 
+    val config = defaultCustomComposable.loadConfig(context)
+    //Log.d(debugTag, "DEVICE_ID: ${config?.get("SN_DEVICE_KEY")}, SHEET_ID: ${config?.get("SHEET_ID")}, EMAIL_PASSWORD: ${config?.get("EMAIL_PASSWORD")}")
+    sharedPref.savePreference(DEVICE_ID, config?.get("SN_DEVICE_KEY"))
+    sharedPref.savePreference(SHEET_ID, config?.get("SHEET_ID"))
+    sharedPref.savePreference(EMAIL_PASSWORD, config?.get("EMAIL_PASSWORD"))
+
+//  sharedPref.savePreference(DEVICE_ID, "TMS-05-L04-0917-018")
+//  sharedPref.savePreference(SHEET_ID, "1QnC1PCFeGE9gpVbS6FJ9HTkXq8aH8utZ5joXZHsN82A")
+//  sharedPref.savePreference(EMAIL_PASSWORD, "bbuvdgxybmrgqzcc")
+
     uartViewModel.initUart(context)
   }
 
@@ -73,10 +86,14 @@ fun HomePage(controlRoute: NavHostController) {
   LaunchedEffect(fTemp1, fTemp2) {
     val tempAdjust1 = sharedPref.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
     val tempAdjust2 = sharedPref.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
+
+    // Update real temperature (temperature + adjust)
     if (fTemp1 != null && fTemp2 != null) {
       minOptionsLng[tag]?.let {
         tempViewModel.updateTemp(fTemp1!! + tempAdjust1, fTemp2!! + tempAdjust2, it)
       }
+    } else {
+      tempViewModel.updateTemp(null, null, 300000)
     }
   }
 

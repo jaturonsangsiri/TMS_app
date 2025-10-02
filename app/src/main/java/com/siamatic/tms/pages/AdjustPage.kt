@@ -61,7 +61,7 @@ fun AdjustPage(paddingValues: PaddingValues, realTemp1: Float?, realTemp2: Float
             else sharedPreferences.savePreference(P2_ADJUST_TEMP, probe.adjustTemp)
             Toast.makeText(context, "Saved Data", Toast.LENGTH_SHORT).show()
           },
-          modifier = Modifier.weight(0.5f).fillMaxHeight(if (isTab3) 0.7f else 0.65f).padding(30.dp),
+          modifier = Modifier.weight(0.5f).fillMaxHeight(if (isTab3) 0.8f else 0.65f).padding(30.dp),
           isTab3 = isTab3
         )
       }

@@ -319,4 +319,13 @@ class DefaultCustomComposable {
     val jsonTxt = configFile.bufferedReader().use { it.readText() }
     return JSONObject(jsonTxt)
   }
+
+  // Check temperature is not normal in send email and send google sheet
+  fun checkTempOutOfRange(temp: Float?, min: Float?, max: Float?): String {
+    return if (temp != null && min != null && max != null) {
+      if ((temp ?: 0f) < min || (temp ?: 0f) > max) "Warring Temp is out of range" else "Normal Temp"
+    } else {
+     "Null"
+    }
+  }
 }

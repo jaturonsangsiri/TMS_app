@@ -91,16 +91,6 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   val tempAdjust1 = sharedPref.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
   val tempAdjust2 = sharedPref.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
 
-  val config = defaultCustomComposable.loadConfig(context)
-  Log.d(debugTag, "DEVICE_ID: ${config?.get("DEVICE_ID")}, SHEET_ID: ${config?.get("SHEET_ID")}, EMAIL_PASSWORD: ${config?.get("EMAIL_PASSWORD")}")
-  sharedPref.savePreference(DEVICE_ID, config?.get("DEVICE_ID"))
-  sharedPref.savePreference(SHEET_ID, config?.get("SHEET_ID"))
-  sharedPref.savePreference(EMAIL_PASSWORD, config?.get("EMAIL_PASSWORD"))
-
-//  sharedPref.savePreference(DEVICE_ID, "TMS-05-L04-0917-018")
-//  sharedPref.savePreference(SHEET_ID, "1QnC1PCFeGE9gpVbS6FJ9HTkXq8aH8utZ5joXZHsN82A")
-//  sharedPref.savePreference(EMAIL_PASSWORD, "bbuvdgxybmrgqzcc")
-
   val probes = remember(fTemp1, fTemp2) {
     mutableStateListOf(
       Probe(sharedPref.getPreference(DEVICE_NAME1, "String", "Probe 1").toString(), temperature = fTemp1?.plus(tempAdjust1)),
