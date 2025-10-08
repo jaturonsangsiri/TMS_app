@@ -77,9 +77,15 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
 
             // If can't get temperature 6 times
             if (countTempError >= 6) {
+              countTempError = 0
+              _fTemp1.value = null
+              _fTemp2.value = null
               // Update the connect icon in MainPage
               _isConnect.value = false
+
+              resetHardware(context)
             }
+
             Thread.sleep(1000)
           }
         } catch (e: Exception) {

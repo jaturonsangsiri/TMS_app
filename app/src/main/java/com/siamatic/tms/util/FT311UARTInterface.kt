@@ -363,12 +363,12 @@ class FT311UARTInterface() {
     readThread?.interrupt()
     readThread = null
 
-    try {
-      writeUsbData[0] = 0 // send dummy data for input stream .read going
-      sendPacket(1)
-    } catch (_: Exception) {}
+//    try {
+//      writeUsbData[0] = 0 // send dummy data for input stream .read going
+//      sendPacket(1)
+//    } catch (_: Exception) {}
 
-    Thread.sleep(10)
+    //Thread.sleep(10)
     closeAccessory()
   }
 

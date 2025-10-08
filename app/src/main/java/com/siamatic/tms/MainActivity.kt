@@ -20,13 +20,13 @@ open class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
 
     // Lock Task Mode (Kiosk)
-    //startLockTask()
+    startLockTask()
 
     // FullScreen and hide bottom & top system bars
-//    WindowCompat.setDecorFitsSystemWindows(window, false)
-//    val controller = WindowInsetsControllerCompat(window, window.decorView)
-//    controller.hide(WindowInsetsCompat.Type.systemBars())
-//    controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    WindowCompat.setDecorFitsSystemWindows(window, true)
+    val controller = WindowInsetsControllerCompat(window, window.decorView)
+    controller.hide(WindowInsetsCompat.Type.systemBars())
+    controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
     // Keep the screen on
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -48,6 +48,11 @@ open class MainActivity : ComponentActivity() {
         Routes(navController)
       }
     }
+  }
+
+  // Disable back button on main screen
+  override fun onBackPressed() {
+    // Do nothing
   }
 
 //  override fun onWindowFocusChanged(hasFocus: Boolean) {
