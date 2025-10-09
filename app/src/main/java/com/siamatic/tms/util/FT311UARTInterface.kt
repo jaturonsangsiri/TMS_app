@@ -132,7 +132,7 @@ class FT311UARTInterface() {
 
             fun parseTemp(high: Byte, low: Byte): Int = ((high.toInt() and 0xFF) shl 8) or (low.toInt() and 0xFF)
 
-            Log.d(debugTag, "packet[5]: ${packet[5]}, packet[6]: ${packet[6]}, packet[8]: ${packet[8]}, packet[9]: ${packet[9]}")
+            //Log.d(debugTag, "packet[5]: ${packet[5]}, packet[6]: ${packet[6]}, packet[8]: ${packet[8]}, packet[9]: ${packet[9]}")
             val iTemp1 = parseTemp(packet[5], packet[6])
             val iTemp2 = parseTemp(packet[8], packet[9])
             //Log.d(debugTag, "iTemp1: $iTemp1, iTemp2: $iTemp2")

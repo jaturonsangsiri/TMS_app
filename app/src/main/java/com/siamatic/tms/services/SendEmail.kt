@@ -80,12 +80,12 @@ class SendEmail {
         val csvFile = File(context.getExternalFilesDir(null), "$fileName.csv")
         csvFile.bufferedWriter().use { csv ->
           // header row
-          csv.write("No.,Serial Number,IP Address,Temp 1,Status 1,Min Temp 1,Max Temp 1,Adjust Temp 1,Temp 2,Status 2,Min Temp 2,Max Temp 2,Adjust Temp 2,Time")
+          csv.write("No.,Serial Number,IP Address,Temp 1,Status 1,Min Temp 1,Max Temp 1,Adjust Temp 1,Temp 2,Status 2,Min Temp 2,Max Temp 2,Adjust Temp 2,Time,Date")
           csv.newLine()
 
           // data rows
           data.forEachIndexed { index, value ->
-            val txt = "${index + 1},$deviceId,$ipAddress,${value.temp1},${defaultCustomComposable.checkTempOutOfRange(value.temp1.toString().toFloat(), minTemp1, maxTemp1)},$minTemp1,$maxTemp1,$adjTemp1,${value.temp2},${defaultCustomComposable.checkTempOutOfRange(value.temp2.toString().toFloat(), minTemp2, maxTemp2)},$minTemp2,$maxTemp2,$adjTemp2,${value.timeStr}"
+            val txt = "${index + 1},$deviceId,$ipAddress,${value.temp1},${defaultCustomComposable.checkTempOutOfRange(value.temp1.toString().toFloat(), minTemp1, maxTemp1)},$minTemp1,$maxTemp1,$adjTemp1,${value.temp2},${defaultCustomComposable.checkTempOutOfRange(value.temp2.toString().toFloat(), minTemp2, maxTemp2)},$minTemp2,$maxTemp2,$adjTemp2,${value.timeStr},${value.dateStr}"
             //Log.i(debugTag, "Line: $txt")
             csv.write(txt)
             csv.newLine()
@@ -103,7 +103,7 @@ class SendEmail {
         mimeMessage.subject = "Temperature Report"
 
         // เซ็ต Body Email
-        messageBodyPart.setText("รายงานการบันทึกผลอุณหภูมิ ณ วันที่ $startDate ถึงวันที่ $endDate\n ")
+        messageBodyPart.setText("รายงานการบันทึกผลอุณหภูมิ ณ วันที่ ${defaultCustomComposable.convertLongToDateOnly(startDate.toLong())} ถึงวันที่ ${defaultCustomComposable.convertLongToDateOnly(endDate.toLong())}\n ")
         multipart.addBodyPart(messageBodyPart)
 
         // ตั้งค่าไฟล์
