@@ -20,7 +20,7 @@ open class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
 
     // Lock Task Mode (Kiosk)
-    startLockTask()
+    //startLockTask()
 
     // FullScreen and hide bottom & top system bars
     WindowCompat.setDecorFitsSystemWindows(window, true)
@@ -30,6 +30,8 @@ open class MainActivity : ComponentActivity() {
 
     // Keep the screen on
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    // Set the screen brightness to 40% for prevent energy waste
+    window.attributes.screenBrightness = 0.4f
 
 
     // Open Immersive Sticky

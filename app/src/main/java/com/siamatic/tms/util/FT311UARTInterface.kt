@@ -416,7 +416,7 @@ class FT311UARTInterface() {
   /* USB input data handler */
   inner class ReadThread(private var instream: FileInputStream?) : Thread() {
     init {
-      this.priority = MAX_PRIORITY
+      this.priority = MIN_PRIORITY
     }
 
     override fun run() {

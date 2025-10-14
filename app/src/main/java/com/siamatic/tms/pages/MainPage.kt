@@ -1,8 +1,16 @@
 package com.siamatic.tms.pages
 
 import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Typeface
 import android.media.MediaPlayer
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -91,6 +99,31 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   val tempAdjust1 = sharedPref.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
   val tempAdjust2 = sharedPref.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
 
+  // Check for internet show Dialog
+  var shownNoWifiToast by remember { mutableStateOf(false) }
+  val wifiReceiver = remember {
+    object : BroadcastReceiver() {
+      override fun onReceive(context: Context?, intent: Intent?) {
+        val cm = context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val networkInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
+        if (networkInfo?.isConnected == true) {
+          wifiIcon = R.drawable.wifi
+          //Log.i(debugTag, "WIFI is connected")
+          if (shownNoWifiToast) {
+            Toast.makeText(context, "WIFI is connected", Toast.LENGTH_SHORT).show()
+            shownNoWifiToast = false
+          }
+        } else {
+          wifiIcon = R.drawable.no_wifi
+          if (!shownNoWifiToast) {
+            Toast.makeText(context, "WIFI is not connect", Toast.LENGTH_SHORT).show()
+            shownNoWifiToast = true
+          }
+        }
+      }
+    }
+  }
+
   val probes = remember(fTemp1, fTemp2) {
     mutableStateListOf(
       Probe(sharedPref.getPreference(DEVICE_NAME1, "String", "Probe 1").toString(), temperature = fTemp1?.plus(tempAdjust1)),
@@ -143,19 +176,32 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 
   // Checking wifi in every 30 second
   // Use LaunchedEffect + Delay instead of Timer (safer to write)
-  LaunchedEffect(Unit) {
-    while(true) {
-      if (checkForInternet(context)) {
-        wifiIcon = R.drawable.wifi
-        //Log.i(debugTag, "WIFI is connected")
-      } else {
-        wifiIcon = R.drawable.no_wifi
-        //Log.i(debugTag, "WIFI is not connect")
-        Toast.makeText(context, "WIFI is not connect", Toast.LENGTH_SHORT).show()
-      }
-      delay(30000L) // every 30 second
+  DisposableEffect(Unit) {
+    val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+    context.registerReceiver(wifiReceiver, filter)
+    onDispose { 
+      context.unregisterReceiver(wifiReceiver) 
     }
   }
+
+  // LaunchedEffect(Unit) {
+  //   while(true) {
+  //     if (checkForInternet(context)) {
+  //       wifiIcon = R.drawable.wifi
+  //       shownNoWifiToast = false
+  //       //Log.i(debugTag, "WIFI is connected")
+  //     } else {
+  //       wifiIcon = R.drawable.no_wifi
+  //       //Log.i(debugTag, "WIFI is not connect")
+        
+  //       if (!shownNoWifiToast) {
+  //         Toast.makeText(context, "WIFI is not connected", Toast.LENGTH_SHORT).show()
+  //         shownNoWifiToast = true
+  //       }
+  //     }
+  //     delay(30000L) // every 30 second
+  //   }
+  // }
 
   // If temperature is more than MaxTemp or less than MinTemp play the alarm
 
