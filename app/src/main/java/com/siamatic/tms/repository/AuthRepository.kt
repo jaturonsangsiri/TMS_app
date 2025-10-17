@@ -1,8 +1,8 @@
 package com.siamatic.tms.repository
 
-import com.siamatic.tms.models.viewModel.login.LoginRequest
+import com.siamatic.tms.models.dataClass.login.LoginRequest
+import com.siamatic.tms.models.dataClass.login.LoginResponse
 import com.siamatic.tms.services.api_Service.ApiClient
-import com.siamatic.tms.models.viewModel.login.LoginResponse
 
 class AuthRepository {
   private val apiService = ApiClient.apiService
@@ -20,7 +20,6 @@ class AuthRepository {
           Result.failure(Exception("Response body is null"))
         }
       } else {
-        val errorBody = response.errorBody()?.string()
         Result.failure(Exception("Login failed: ${response.code()} ${response.message()}"))
       }
     } catch (e: Exception) {

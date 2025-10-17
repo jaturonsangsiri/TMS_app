@@ -15,6 +15,7 @@ import com.siamatic.tms.constants.TEMP_MIN_P1
 import com.siamatic.tms.constants.TEMP_MIN_P2
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.database.DatabaseProvider
+import com.siamatic.tms.database.OfflineTemp
 import com.siamatic.tms.database.Temp
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.Probe
@@ -53,6 +54,11 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     startTempTimer()
   }
 
+  // Get offline temps
+  suspend fun getAllOfflineTemps(): List<OfflineTemp>? {
+    return DatabaseProvider.getDatabase(application).offlineTempDao().getAll()
+  }
+
   // Get temperature by date
   fun loadTempsByDate(date: Long) {
     viewModelScope.launch {
@@ -87,6 +93,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           //Log.d(debugTag, "minOptionsLng: ${minOptionsLng[tag]} milli seconds")
           val roundedTemp1 = fTemp1?.let { "%.2f".format(it).toFloat() }
           val roundedTemp2 = fTemp2?.let { "%.2f".format(it).toFloat() }
+          val dateTime = "${defaultCustomComposable.convertLongToDateOnly(System.currentTimeMillis())} ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}"
 
           if (roundedTemp1 != null || roundedTemp2 != null) {
             insertTemp(roundedTemp1 ?: 0f, roundedTemp2 ?: 0f)
@@ -99,7 +106,8 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
               machineIP = ipAddress,
               minTemp = minTemp1,
               maxTemp = maxTemp1,
-              adjTemp = adjTemp1
+              adjTemp = adjTemp1,
+              dateTime = dateTime
             )
             googleViewModel.addTemperatureToGoogleSheet(
               sheetId = sheetId,
@@ -110,7 +118,8 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
               machineIP = ipAddress,
               minTemp = minTemp2,
               maxTemp = maxTemp2,
-              adjTemp = adjTemp2
+              adjTemp = adjTemp2,
+              dateTime = dateTime
             )
             Log.i(debugTag, "New temp recorded at ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}: fTemp1=$roundedTemp1, fTemp2=$roundedTemp2")
           }

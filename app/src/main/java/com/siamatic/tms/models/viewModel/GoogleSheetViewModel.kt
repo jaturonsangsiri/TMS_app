@@ -9,10 +9,10 @@ import com.siamatic.tms.services.api_Service.ApiClient
 import kotlinx.coroutines.launch
 
 class GoogleSheetViewModel : ViewModel() {
-  fun addTemperatureToGoogleSheet(sheetId: String, serialNumber: String, probe: String, temp: Float, acStatus: String, machineIP: String, minTemp: Float, maxTemp: Float, adjTemp: Float) {
+  fun addTemperatureToGoogleSheet(sheetId: String, serialNumber: String, probe: String, temp: Float, acStatus: String, machineIP: String, minTemp: Float, maxTemp: Float, adjTemp: Float, dateTime: String) {
     viewModelScope.launch {
       try {
-        val request = GoogleSheetRequest(sheetId, serialNumber, probe, temp, acStatus, machineIP, minTemp, maxTemp, adjTemp)
+        val request = GoogleSheetRequest(sheetId, serialNumber, probe, temp, acStatus, machineIP, minTemp, maxTemp, adjTemp, dateTime)
         val response = ApiClient.apiService.addGoogleSheetTemperature(request)
 
         if (response.isSuccessful) {

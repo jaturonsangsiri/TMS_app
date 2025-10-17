@@ -156,11 +156,8 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   LaunchedEffect(Unit) {
     withContext(Dispatchers.IO) {
       val offlineTemps = tempViewModel.getAllOfflineTemps()
-      offlineTemps.forEach { temp ->
-        Log.i(
-          debugTag,
-          "Offline Temp ID: ${temp.id}, Temp1: ${temp.temp1}, Temp2: ${temp.temp2}, Date: ${temp.dateStr}, Time: ${temp.timeStr}"
-        )
+      offlineTemps?.forEach { temp ->
+        Log.i(debugTag, "Offline Temp ID: ${temp.id}, Temp1: ${temp.temp1}, Temp2: ${temp.temp2}, Date: ${temp.dateStr}, Time: ${temp.timeStr}")
       }
     }
   }
