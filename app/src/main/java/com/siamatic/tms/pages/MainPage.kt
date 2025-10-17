@@ -62,7 +62,6 @@ import com.siamatic.tms.constants.IS_MUTE
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
 import com.siamatic.tms.constants.RECORD_INTERVAL
-import com.siamatic.tms.constants.SHEET_ID
 import com.siamatic.tms.constants.TEMP_MAX_P1
 import com.siamatic.tms.constants.TEMP_MAX_P2
 import com.siamatic.tms.constants.TEMP_MIN_P1
@@ -80,6 +79,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Timer
 import java.util.TimerTask
 
@@ -90,6 +90,8 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 
   val context = LocalContext.current
   val uartViewModel: UartViewModel = viewModel()
+  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+
   // Check connection
   val isConnect by uartViewModel.isConnect.collectAsState()
 
@@ -139,7 +141,7 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 
   // Mute or unmute
   val isMute = remember { mutableStateOf(sharedPref.getPreference(IS_MUTE, "String", "false")) }
-  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+  
   var previousTemp1 by remember { mutableStateOf<Float?>(null) } // previous temp1
   var previousTemp2 by remember { mutableStateOf<Float?>(null) } // previous temp2
 
@@ -148,6 +150,18 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   var mediaPlayer: MediaPlayer? = MediaPlayer.create(context, R.raw.alarm_sound).apply {
     setOnCompletionListener {
       isStartedAlarm.value = false
+    }
+  }
+
+  LaunchedEffect(Unit) {
+    withContext(Dispatchers.IO) {
+      val offlineTemps = tempViewModel.getAllOfflineTemps()
+      offlineTemps.forEach { temp ->
+        Log.i(
+          debugTag,
+          "Offline Temp ID: ${temp.id}, Temp1: ${temp.temp1}, Temp2: ${temp.temp2}, Date: ${temp.dateStr}, Time: ${temp.timeStr}"
+        )
+      }
     }
   }
 
@@ -174,7 +188,6 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
     }
   }
 
-  // Checking wifi in every 30 second
   // Use LaunchedEffect + Delay instead of Timer (safer to write)
   DisposableEffect(Unit) {
     val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -183,25 +196,6 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
       context.unregisterReceiver(wifiReceiver) 
     }
   }
-
-  // LaunchedEffect(Unit) {
-  //   while(true) {
-  //     if (checkForInternet(context)) {
-  //       wifiIcon = R.drawable.wifi
-  //       shownNoWifiToast = false
-  //       //Log.i(debugTag, "WIFI is connected")
-  //     } else {
-  //       wifiIcon = R.drawable.no_wifi
-  //       //Log.i(debugTag, "WIFI is not connect")
-        
-  //       if (!shownNoWifiToast) {
-  //         Toast.makeText(context, "WIFI is not connected", Toast.LENGTH_SHORT).show()
-  //         shownNoWifiToast = true
-  //       }
-  //     }
-  //     delay(30000L) // every 30 second
-  //   }
-  // }
 
   // If temperature is more than MaxTemp or less than MinTemp play the alarm
 

@@ -33,7 +33,6 @@ open class MainActivity : ComponentActivity() {
     // Set the screen brightness to 40% for prevent energy waste
     window.attributes.screenBrightness = 0.4f
 
-
     // Open Immersive Sticky
 //    window.decorView.systemUiVisibility = (
 //       android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY

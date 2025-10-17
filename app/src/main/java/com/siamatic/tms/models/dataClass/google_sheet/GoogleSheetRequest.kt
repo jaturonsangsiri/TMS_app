@@ -9,5 +9,6 @@ data class GoogleSheetRequest(
   val machineIP: String,
   val minTemp: Float,
   val maxTemp: Float,
-  val adjTemp: Float
+  val adjTemp: Float,
+  val dateTime: String
 )

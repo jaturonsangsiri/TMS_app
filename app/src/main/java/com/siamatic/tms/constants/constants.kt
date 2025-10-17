@@ -41,6 +41,10 @@ const val P1_ADJUST_TEMP = "P1_ADJUST_TEMP"
 const val P2_ADJUST_TEMP = "P2_ADJUST_TEMP"
 const val EMAIL_PASSWORD = "EMAIL_PASSWORD"
 
+// Google script ID
+const val GOOGLE_SCRIPT_ID = "GOOGLE_SCRIPT_ID"
+// DEVICE_API_TOKEN for API TOKEN KEY
+const val DEVICE_API_TOKEN = "DEVICE_API_TOKEN"
 // Google Sheet ID
 const val SHEET_ID = "SHEET_ID"
 

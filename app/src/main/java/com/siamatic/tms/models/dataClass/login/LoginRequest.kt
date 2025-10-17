@@ -1,4 +1,4 @@
-package com.siamatic.tms.models.viewModel.login
+package com.siamatic.tms.models.dataClass.login
 
 data class LoginRequest(
   val username: String,

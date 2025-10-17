@@ -2,7 +2,7 @@ package com.siamatic.tms.composables.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.siamatic.tms.models.viewModel.login.LoginResponse
+import com.siamatic.tms.models.dataClass.login.LoginResponse
 import com.siamatic.tms.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
