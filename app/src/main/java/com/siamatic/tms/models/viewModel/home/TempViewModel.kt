@@ -19,9 +19,12 @@ import com.siamatic.tms.database.OfflineTemp
 import com.siamatic.tms.database.Temp
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.Probe
+import com.siamatic.tms.models.viewModel.ApiServerViewModel
 import com.siamatic.tms.models.viewModel.GoogleSheetViewModel
+import com.siamatic.tms.util.checkForInternet
 import com.siamatic.tms.util.sharedPreferencesClass
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,8 +36,11 @@ import java.util.TimerTask
 class TempViewModel(application: Application): AndroidViewModel(application) {
   private val prePref = sharedPreferencesClass(application)
   private val googleViewModel = GoogleSheetViewModel()
+  private val apiServerViewModel = ApiServerViewModel()
 
   private val tempDao = DatabaseProvider.getDatabase(application).tempDao()
+  private val offlineTempDao = DatabaseProvider.getDatabase(application).offlineTempDao()
+
   private val timer = Timer()
   // Flow สำหรับรับค่า temp ล่าสุด
   private val _latestTemp = MutableStateFlow<Pair<Float?, Float?>>(null to null)
@@ -47,16 +53,13 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   private val _allTemps = MutableStateFlow<List<Temp>>(emptyList())
   val allTemps: StateFlow<List<Temp>> = _allTemps.asStateFlow()
 
-  val _allProbes = MutableStateFlow(List(2) { index -> Probe(name = "Probe ${index + 1}") })
-  val allProbes: StateFlow<List<Probe>> = _allProbes.asStateFlow()
-
   init {
     startTempTimer()
   }
 
   // Get offline temps
-  suspend fun getAllOfflineTemps(): List<OfflineTemp>? {
-    return DatabaseProvider.getDatabase(application).offlineTempDao().getAll()
+  fun getAllOfflineTemps(): List<OfflineTemp>? {
+    return offlineTempDao.getAll()
   }
 
   // Get temperature by date
@@ -89,44 +92,62 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
 
       override fun run() {
         viewModelScope.launch(Dispatchers.IO) {
-          val (fTemp1, fTemp2) = _latestTemp.value
-          //Log.d(debugTag, "minOptionsLng: ${minOptionsLng[tag]} milli seconds")
-          val roundedTemp1 = fTemp1?.let { "%.2f".format(it).toFloat() }
-          val roundedTemp2 = fTemp2?.let { "%.2f".format(it).toFloat() }
-          val dateTime = "${defaultCustomComposable.convertLongToDateOnly(System.currentTimeMillis())} ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}"
+          val roundedTemp1 = _latestTemp.value.first?.let { "%.2f".format(it).toFloat() }
+          val roundedTemp2 = _latestTemp.value.second?.let { "%.2f".format(it).toFloat() }
+          val date = defaultCustomComposable.convertLongToDateOnly(System.currentTimeMillis())
+          val time = defaultCustomComposable.convertLongToTime(System.currentTimeMillis())
+          val isOnline = checkForInternet(context = application)
 
-          if (roundedTemp1 != null || roundedTemp2 != null) {
-            insertTemp(roundedTemp1 ?: 0f, roundedTemp2 ?: 0f)
-            googleViewModel.addTemperatureToGoogleSheet(
-              sheetId = sheetId,
-              serialNumber = serialNumber,
-              probe = "Probe 1",
-              temp = roundedTemp1 ?: 0f,
-              acStatus = defaultCustomComposable.checkTempOutOfRange(roundedTemp1, minTemp1, maxTemp1),
-              machineIP = ipAddress,
-              minTemp = minTemp1,
-              maxTemp = maxTemp1,
-              adjTemp = adjTemp1,
-              dateTime = dateTime
-            )
-            googleViewModel.addTemperatureToGoogleSheet(
-              sheetId = sheetId,
-              serialNumber = serialNumber,
-              probe = "Probe 2",
-              temp = roundedTemp2 ?: 0f,
-              acStatus = defaultCustomComposable.checkTempOutOfRange(roundedTemp2, minTemp2, maxTemp2),
-              machineIP = ipAddress,
-              minTemp = minTemp2,
-              maxTemp = maxTemp2,
-              adjTemp = adjTemp2,
-              dateTime = dateTime
-            )
+          // Get offline temps
+          val offlineTemps = getAllOfflineTemps()
+          if (!offlineTemps.isNullOrEmpty() && isOnline) {
+            for (offlineTemp in offlineTemps) {
+              if (offlineTemp.temp1 != null && offlineTemp.temp2 != null) {
+                val addedP1 = addData(sheetId, serialNumber, "Probe 1", offlineTemp.temp1, offlineTemp.temp1 - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time)
+                val addedP2 = addData(sheetId, serialNumber, "Probe 2", offlineTemp.temp2, offlineTemp.temp2 - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time)
+
+                // If successfully uploaded, log it
+                if (addedP1 && addedP2) {
+                  offlineTempDao.deleteById(offlineTemp.id)
+                } else {
+                  Log.e(debugTag, "Failed to upload offline temp!")
+                  continue
+                }
+              }
+            }
+
+            Log.i(debugTag, "Offline temp uploaded")
+          }
+
+          if ((roundedTemp1 != null || roundedTemp2 != null) && isOnline) {
+            insertTemp(roundedTemp1, roundedTemp2)
+            addData(sheetId, serialNumber, "Probe 1", roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time)
+            addData(sheetId, serialNumber, "Probe 2", roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time)
             Log.i(debugTag, "New temp recorded at ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}: fTemp1=$roundedTemp1, fTemp2=$roundedTemp2")
+          } else if ((roundedTemp1 != null || roundedTemp2 != null) && !isOnline) {
+            insertTemp(roundedTemp1 ?: 0f, roundedTemp2 ?: 0f)
+            insertOfflineTemp(roundedTemp1 ?: 0f, roundedTemp2 ?: 0f)
+            Log.i(debugTag, "No internet connection. Temp saved to offline database at ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}: fTemp1=$roundedTemp1, fTemp2=$roundedTemp2")
+          } else {
+            Log.w(debugTag, "No temperature data to record.")
           }
         } 
       }
     }, 0, _interval.value
     )
+  }
+
+  private fun addData(sheetId: String, serialNumber: String, probeName: String, temp: Float, realTemp: Float, minTemp: Float, maxTemp: Float, adjTemp: Float, ipAddress: String, date: String, time: String): Boolean {
+    var success = false
+    viewModelScope.launch(Dispatchers.IO) {
+      // status = สภานะตู้ ซึ่งใน TMS ยังไม่มีเซ็นเซอร์ประตู
+      val addedAPI = async { apiServerViewModel.addTemp(mcuId = serialNumber, status = "N/A", tempValue = temp, realValue = realTemp, date = date, time = time) }
+      val addedGS = async { googleViewModel.addTemperatureToGoogleSheet(sheetId = sheetId, serialNumber = serialNumber, probe = probeName, temp = temp, acStatus = defaultCustomComposable.checkTempOutOfRange(temp, minTemp, maxTemp), machineIP = ipAddress, minTemp = minTemp, maxTemp = maxTemp, adjTemp = adjTemp, dateTime = "$date $time") }
+      if (addedAPI.await() == true && addedGS.await() == true) {
+        success = true
+      }
+    }
+    return success
   }
 
   override fun onCleared() {
@@ -143,11 +164,12 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     }
   }
 
-  fun updateProbeAdjustTemp(index: Int, adjustTemp: Float?) {
-    if (adjustTemp != null) {
-      val current = _allProbes.value.toMutableList()
-      current[index] = current[index].copy(adjustTemp = adjustTemp)
-      _allProbes.value = current
+  // Add offline temperature
+  fun insertOfflineTemp(fTemp1: Float?, fTemp2: Float?) {
+    viewModelScope.launch {
+      val date = System.currentTimeMillis()
+      val record = OfflineTemp(temp1 = fTemp1, temp2 = fTemp2, timeStr = defaultCustomComposable.convertLongToTime(date), dateStr = defaultCustomComposable.convertLongToDateOnly(date))
+      offlineTempDao.insertAll(record)
     }
   }
 

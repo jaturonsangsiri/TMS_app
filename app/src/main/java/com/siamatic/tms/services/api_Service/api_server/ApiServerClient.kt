@@ -1,4 +1,4 @@
-package com.siamatic.tms.services.api_Service
+package com.siamatic.tms.services.api_Service.api_server
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -10,12 +10,10 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-object ApiClient {
-  //private const val BASE_URL = "https://tms.siamatic.co.th/smtrack/"
-  private const val BASE_URL = "https://script.google.com/macros/s/AKfycbzS3G1hjIbVhsgnVDyb5GsZD90bXedlvgIGIgbxFdzw1sGwp3e-KJ9JVFxUAy8TMewNyQ/"
+object ApiServerClient {
+  private const val BASE_URL = "http://192.168.0.111:8888"
 
-  // สำหรับการ Development - ใช้ Self-signed Certificate
-  private fun getDevelopHttpClient(): OkHttpClient {
+  private fun getHttpClient(): OkHttpClient {
     return try {
       val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
         override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
@@ -55,8 +53,8 @@ object ApiClient {
 
   private val retrofit = Retrofit.Builder()
     .baseUrl(BASE_URL)
-    .client(getDevelopHttpClient())
+    .client(getHttpClient())
     .addConverterFactory(GsonConverterFactory.create())
     .build()
-  val apiService: ApiService = retrofit.create(ApiService::class.java)
+  val apiServerService: ApiServerService = retrofit.create(ApiServerService::class.java)
 }
