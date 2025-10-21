@@ -3,10 +3,10 @@ package com.siamatic.tms.models.dataClass.apiServer
 data class ApiServerResponse(
     val success: Boolean,
     val message: String,
-    val data: Data
+    val data: ApiServerResponseData
 )
 
-data class Data(
+data class ApiServerResponseData(
     val id: Int,
     val mcuId: String,
     val status: String,

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.siamatic.tms.constants.DEVICE_API_TOKEN
 import com.siamatic.tms.constants.DEVICE_ID
 import com.siamatic.tms.constants.EMAIL_PASSWORD
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
@@ -65,14 +66,11 @@ fun HomePage(controlRoute: NavHostController) {
     //tempViewModel.resetData()
 
     val config = defaultCustomComposable.loadConfig(context)
-    //Log.d(debugTag, "DEVICE_ID: ${config?.get("SN_DEVICE_KEY")}, SHEET_ID: ${config?.get("SHEET_ID")}, EMAIL_PASSWORD: ${config?.get("EMAIL_PASSWORD")}")
+    //Log.d(debugTag, "DEVICE_ID: ${config?.get("SN_DEVICE_KEY")}, SHEET_ID: ${config?.get("SHEET_ID")}, EMAIL_PASSWORD: ${config?.get("EMAIL_PASSWORD")}, DEVICE_API_TOKEN: ${config?.get("DEVICE_API_TOKEN")}")
     sharedPref.savePreference(DEVICE_ID, config?.get("SN_DEVICE_KEY"))
     sharedPref.savePreference(SHEET_ID, config?.get("SHEET_ID"))
     sharedPref.savePreference(EMAIL_PASSWORD, config?.get("EMAIL_PASSWORD"))
-
-//  sharedPref.savePreference(DEVICE_ID, "TMS-05-L04-0917-018")
-//  sharedPref.savePreference(SHEET_ID, "1QnC1PCFeGE9gpVbS6FJ9HTkXq8aH8utZ5joXZHsN82A")
-//  sharedPref.savePreference(EMAIL_PASSWORD, "bbuvdgxybmrgqzcc")
+    sharedPref.savePreference(DEVICE_API_TOKEN, config?.get("DEVICE_API_TOKEN"))
 
     uartViewModel.initUart(context)
   }

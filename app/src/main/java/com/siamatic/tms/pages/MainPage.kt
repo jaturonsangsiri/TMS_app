@@ -1,6 +1,5 @@
 package com.siamatic.tms.pages
 
-import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -8,10 +7,6 @@ import android.content.IntentFilter
 import android.graphics.Typeface
 import android.media.MediaPlayer
 import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.TextClock
@@ -50,38 +45,23 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
 import com.siamatic.tms.composables.home.ProbeBox
-import com.siamatic.tms.constants.DEVICE_ID
 import com.siamatic.tms.constants.DEVICE_NAME1
 import com.siamatic.tms.constants.DEVICE_NAME2
-import com.siamatic.tms.constants.EMAIL_PASSWORD
 import com.siamatic.tms.constants.IS_MUTE
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
-import com.siamatic.tms.constants.RECORD_INTERVAL
 import com.siamatic.tms.constants.TEMP_MAX_P1
 import com.siamatic.tms.constants.TEMP_MAX_P2
 import com.siamatic.tms.constants.TEMP_MIN_P1
 import com.siamatic.tms.constants.TEMP_MIN_P2
-import com.siamatic.tms.constants.debugTag
-import com.siamatic.tms.constants.minOptionsLng
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.Probe
-import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.models.viewModel.home.UartViewModel
 import com.siamatic.tms.ui.theme.BabyBlue
-import com.siamatic.tms.util.checkForInternet
 import com.siamatic.tms.util.sharedPreferencesClass
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.Timer
-import java.util.TimerTask
 
 @Composable
 fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
@@ -90,7 +70,7 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 
   val context = LocalContext.current
   val uartViewModel: UartViewModel = viewModel()
-  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+  //val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
 
   // Check connection
   val isConnect by uartViewModel.isConnect.collectAsState()
@@ -153,20 +133,20 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
     }
   }
 
-  LaunchedEffect(Unit) {
-    withContext(Dispatchers.IO) {
-      val offlineTemps = tempViewModel.getAllOfflineTemps()
-      offlineTemps?.forEach { temp ->
-        Log.i(debugTag, "Offline Temp ID: ${temp.id}, Temp1: ${temp.temp1}, Temp2: ${temp.temp2}, Date: ${temp.dateStr}, Time: ${temp.timeStr}")
-      }
-    }
-  }
+//  LaunchedEffect(Unit) {
+//    withContext(Dispatchers.IO) {
+//      val offlineTemps = tempViewModel.getAllOfflineTemps()
+//      offlineTemps?.forEach { temp ->
+//        Log.i(debugTag, "Offline Temp ID: ${temp.id}, Temp1: ${temp.temp1}, Temp2: ${temp.temp2}, Date: ${temp.dateStr}, Time: ${temp.timeStr}")
+//      }
+//    }
+//  }
 
   LaunchedEffect(fTemp1, fTemp2) {
     val roundedTemp1 = fTemp1?.let { "%.2f".format(it).toFloat() }
     val roundedTemp2 = fTemp2?.let { "%.2f".format(it).toFloat() }
-    isOutOfRange1.value = checkRangeTemperature(fTemp1, minTemp1, maxTemp1)
-    isOutOfRange2.value = checkRangeTemperature(fTemp2, minTemp2, maxTemp2)
+    isOutOfRange1.value = defaultCustomComposable.checkRangeTemperature(fTemp1, minTemp1, maxTemp1)
+    isOutOfRange2.value = defaultCustomComposable.checkRangeTemperature(fTemp2, minTemp2, maxTemp2)
 
     if ((roundedTemp1 != null || roundedTemp2 != null) && (roundedTemp1 != previousTemp1 || roundedTemp2 != previousTemp2)) {
       // อัปเดต previous
@@ -270,9 +250,4 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
       )
     }
   }
-}
-
-// Check Range If temperature is more than MaxTemp or less than MinTemp play the alarm
-fun checkRangeTemperature(fTemp: Float?, minTemp: Float?, maxTemp: Float?): Boolean {
-  return if (fTemp != null && minTemp != null && maxTemp != null) fTemp!! < minTemp!! || fTemp > maxTemp!! else false
 }

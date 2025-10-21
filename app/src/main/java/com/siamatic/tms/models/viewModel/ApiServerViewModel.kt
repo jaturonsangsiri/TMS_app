@@ -1,12 +1,18 @@
 package com.siamatic.tms.models.viewModel
 
+import android.content.Context
 import android.util.Log
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.models.dataClass.apiServer.ApiServerRequest
+import com.siamatic.tms.models.dataClass.apiServer.ApiServerRequestNoti
 import com.siamatic.tms.services.api_Service.api_server.ApiServerClient
 
 class ApiServerViewModel {
   private val apiService = ApiServerClient.apiServerService
+
+  fun initApiServer(context: Context) {
+    ApiServerClient.setContext(context)
+  }
 
   suspend fun addTemp(mcuId: String, status: String, tempValue: Float, realValue: Float, date: String, time: String): Boolean? {
     return try {
@@ -28,6 +34,30 @@ class ApiServerViewModel {
       }
     } catch (e: Exception) {
       Log.e(debugTag, "Add temp failed: $e")
+      null
+    }
+  }
+
+  suspend fun notifyNotNormalTemp(mcuId: String, status: String, tempValue: Float, realValue: Float, notiMessage: String, date: String, time: String): Boolean? {
+    return try {
+      val apiServerRequestNoti = ApiServerRequestNoti(mcuId, status, tempValue, realValue, notiMessage, date, time)
+      val response = apiService.notifyNotNormalTemp(apiServerRequestNoti)
+
+      if (response.isSuccessful) {
+        val apiServerResponse = response.body()
+        if (apiServerResponse != null) {
+          Log.i(debugTag, "Notification sent successfully!")
+          true
+        } else {
+          Log.e(debugTag, "Response body is null!")
+          false
+        }
+      } else {
+        Log.e(debugTag, "Notification failed: ${response.code()} ${response.message()}")
+        false
+      }
+    } catch (e: Exception) {
+      Log.e(debugTag, "Notification failed: $e")
       null
     }
   }

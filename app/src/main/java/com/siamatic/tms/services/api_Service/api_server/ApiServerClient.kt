@@ -1,5 +1,8 @@
 package com.siamatic.tms.services.api_Service.api_server
 
+import android.content.Context
+import com.siamatic.tms.constants.DEVICE_API_TOKEN
+import com.siamatic.tms.util.sharedPreferencesClass
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -12,6 +15,11 @@ import javax.net.ssl.X509TrustManager
 
 object ApiServerClient {
   private const val BASE_URL = "http://192.168.0.111:8888"
+  private var token: String? = null
+
+  fun setContext(context: Context) {
+    token = sharedPreferencesClass(context).getPreference(DEVICE_API_TOKEN, "String", "").toString()
+  }
 
   private fun getHttpClient(): OkHttpClient {
     return try {
@@ -25,6 +33,14 @@ object ApiServerClient {
       sslContext.init(null, trustAllCerts, java.security.SecureRandom())
 
       OkHttpClient.Builder()
+        .addInterceptor { chain ->
+          val original = chain.request()
+          val newRequest = original.newBuilder()
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer $token")
+            .build()
+          chain.proceed(newRequest)
+        }
         .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
         .hostnameVerifier {_, _ -> true}
         .addInterceptor(HttpLoggingInterceptor().apply {

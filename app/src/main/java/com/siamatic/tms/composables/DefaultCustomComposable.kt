@@ -328,4 +328,9 @@ class DefaultCustomComposable {
      "Null"
     }
   }
+
+  // Check Range If temperature is more than MaxTemp or less than MinTemp play the alarm
+  fun checkRangeTemperature(fTemp: Float?, minTemp: Float?, maxTemp: Float?): Boolean {
+    return if (fTemp != null && minTemp != null && maxTemp != null) fTemp!! < minTemp!! || fTemp > maxTemp!! else false
+  }
 }
