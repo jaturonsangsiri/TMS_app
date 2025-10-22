@@ -1,6 +1,6 @@
 package com.siamatic.tms.pages
 
-import SmoothLineChart
+import com.siamatic.tms.services.SmoothLineChart
 import android.annotation.SuppressLint
 import android.app.Application
 import androidx.compose.foundation.Image

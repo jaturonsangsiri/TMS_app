@@ -1,3 +1,5 @@
+package com.siamatic.tms.services
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,13 +15,10 @@ import androidx.compose.ui.unit.dp
 import com.siamatic.tms.models.DataPoint
 
 import android.graphics.Paint
-import android.util.Log
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
-import com.siamatic.tms.constants.debugTag
 import kotlin.math.ceil
-import kotlin.math.min
 
 @Composable
 fun SmoothLineChart(data: List<DataPoint>, modifier: Modifier = Modifier, showGrid: Boolean = true, lineColor: Color = Color.Red, smoothness: Float = 0.3f, realZoom: Int) {
@@ -42,9 +41,10 @@ fun SmoothLineChart(data: List<DataPoint>, modifier: Modifier = Modifier, showGr
   1 = x1 288
   */
   // จำนวนข้อมูลที่จะตัดออกจากข้อมูลทั้งหมด กันไม่ให้เกิน length ข้อมูล เผื่อกรณี index น้อยกว่า 5
-  val cut = min(zoomSize * realZoom, data.size - 5)
+  //val cut = min(zoomSize * realZoom, data.size - 5)
   //Log.i(debugTag, "data size: ${data.size} - min($zoomSize * $realZoom, ${data.size - 5}): ${data.size - min(zoomSize * realZoom, data.size - 5)}")
-  val dataGraph = if (data.size > 9) data.takeLast(data.size - cut) else data
+  // ดึงข้อมูลล่าสุด 10 จุด เพราะข้อมูลเยอะๆ แล้วดูกราฟไม่ออก
+  val dataGraph = if (data.size > 9) data.takeLast(9) else data
 
   val minX = dataGraph.minOf { it.x }
   val maxX = dataGraph.maxOf { it.x }
@@ -194,7 +194,7 @@ fun DrawScope.drawAxisLabels(data: List<DataPoint>, canvasWidth: Float, canvasHe
 
   // วาดแกน X
   drawLine(color = Color.White, start = Offset(padding, canvasHeight - padding), end = Offset(canvasWidth - padding, canvasHeight - padding), strokeWidth = 2.dp.toPx())
-  data.forEachIndexed { index, point ->
+  data.forEachIndexed { _, point ->
     val x = padding + (point.x - data.minOf { it.x }) / (data.maxOf { it.x } - data.minOf { it.x }) * (canvasWidth - 2 * padding)
     drawContext.canvas.nativeCanvas.drawText(point.time, x, canvasHeight - padding / 2, textPaint)
   }
@@ -205,6 +205,6 @@ fun DrawScope.drawAxisLabels(data: List<DataPoint>, canvasWidth: Float, canvasHe
   for (i in 0..steps) {
     val y = canvasHeight - padding - i * (canvasHeight - 2 * padding) / steps
     val value = minY + i * (maxY - minY) / steps
-    drawContext.canvas.nativeCanvas.drawText(String.format("%.2f", value), padding / 3, y, textPaint)
+    drawContext.canvas.nativeCanvas.drawText(String.format("%.2f", value), 20F, y, textPaint)
   }
 }
