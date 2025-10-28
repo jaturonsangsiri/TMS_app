@@ -44,8 +44,8 @@ class SendEmail {
     val minTemp1 = prefev.getPreference(TEMP_MIN_P1, "Float", 0f).toString().toFloat()
     val maxTemp2 = prefev.getPreference(TEMP_MAX_P2, "Float", 22f).toString().toFloat()
     val minTemp2 = prefev.getPreference(TEMP_MIN_P2, "Float", 0f).toString().toFloat()
-    val adjTemp1 = prefev.getPreference(P1_ADJUST_TEMP, "Float", -1.0f).toString().toFloatOrNull() ?: -1.0f
-    val adjTemp2 = prefev.getPreference(P2_ADJUST_TEMP, "Float", -1.0f).toString().toFloatOrNull() ?: -1.0f
+    val adjTemp1 = prefev.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
+    val adjTemp2 = prefev.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
     val ipAddress = defaultCustomComposable.getDeviceIP().toString()
     Log.d(debugTag, "email pass: $password, device id: $deviceId")
     if (password != "" && deviceId != "") {

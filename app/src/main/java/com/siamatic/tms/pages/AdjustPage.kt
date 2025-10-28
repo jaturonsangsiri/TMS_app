@@ -44,8 +44,8 @@ fun AdjustPage(paddingValues: PaddingValues, realTemp1: Float?, realTemp2: Float
   val context = LocalContext.current
   val sharedPreferences = sharedPreferencesClass(context)
 
-  var tempAdjust1 by remember { mutableFloatStateOf(sharedPreferences.getPreference(P1_ADJUST_TEMP, "Float", -1.0f).toString().toFloatOrNull() ?: -1.0f) }
-  var tempAdjust2 by remember { mutableFloatStateOf(sharedPreferences.getPreference(P2_ADJUST_TEMP, "Float", -1.0f).toString().toFloatOrNull() ?: -1.0f) }
+  var tempAdjust1 by remember { mutableFloatStateOf(sharedPreferences.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f) }
+  var tempAdjust2 by remember { mutableFloatStateOf(sharedPreferences.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f) }
   val probes = listOf(ProbeData("Probe 1", realTemp1, tempAdjust1) { tempAdjust1 = it }, ProbeData("Probe 2", realTemp2, tempAdjust2) { tempAdjust2 = it })
 
   // ******  For responsive ui *******

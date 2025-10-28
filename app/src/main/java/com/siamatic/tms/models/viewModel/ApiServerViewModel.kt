@@ -19,17 +19,16 @@ class ApiServerViewModel {
       val apiServerRequest = ApiServerRequest(mcuId, status, tempValue, realValue, date, time)
       val response = apiService.addTempToServer(apiServerRequest)
 
-      if (response.isSuccessful) {
-        val apiServerResponse = response.body()
-        if (apiServerResponse != null) {
-          Log.i(debugTag, "Added temp to api successful!")
+      if (response.body() != null) {
+        if (response.isSuccessful && response.body()?.success == true) {
+          Log.i(debugTag, "Response: ${response.body()!!.data}")
           true
         } else {
-          Log.e(debugTag, "Response body is null!")
+          Log.e(debugTag, "Add temp failed: ${response.code()} ${response.message()}")
           false
         }
       } else {
-        Log.e(debugTag, "Add temp failed: ${response.code()} ${response.message()}")
+        Log.e(debugTag, "Response body is null!, ${response.body()}")
         false
       }
     } catch (e: Exception) {
@@ -43,17 +42,16 @@ class ApiServerViewModel {
       val apiServerRequestNoti = ApiServerRequestNoti(mcuId, status, tempValue, realValue, notiMessage, date, time)
       val response = apiService.notifyNotNormalTemp(apiServerRequestNoti)
 
-      if (response.isSuccessful) {
-        val apiServerResponse = response.body()
-        if (apiServerResponse != null) {
-          Log.i(debugTag, "Notification sent successfully!")
+      if (response.body() != null) {
+        if (response.isSuccessful && response.body()?.success == true) {
+          Log.i(debugTag, "Response: ${response.body()!!.data}")
           true
         } else {
-          Log.e(debugTag, "Response body is null!")
+          Log.e(debugTag, "Notification failed: ${response.code()} ${response.message()}")
           false
         }
       } else {
-        Log.e(debugTag, "Notification failed: ${response.code()} ${response.message()}")
+        Log.e(debugTag, "Response body is null!, ${response.body()}")
         false
       }
     } catch (e: Exception) {

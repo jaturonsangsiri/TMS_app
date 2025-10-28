@@ -15,11 +15,16 @@ class GoogleSheetViewModel : ViewModel() {
         val request = GoogleSheetRequest(sheetId, serialNumber, probe, temp, acStatus, machineIP, minTemp, maxTemp, adjTemp, dateTime)
         val response = GoogleSheetApiClient.googleSheetApiService.addGoogleSheetTemperature(request)
 
-        if (response.isSuccessful) {
-          Log.i(debugTag, "Added google sheet rows")
-          true
+        if (response.body() != null) {
+          if (response.isSuccessful && response.body()?.code == 200) {
+            Log.i(debugTag, "Response google sheet: ${response.body()!!.message}")
+            true
+          } else {
+            Log.e(debugTag, "Error in add google sheet: ${response.code()} - ${response.errorBody()?.string()}")
+            false
+          }
         } else {
-          Log.e(debugTag, "Error in add google sheet: ${response.code()} - ${response.errorBody()?.string()}")
+          Log.e(debugTag, "Response body is null!, ${response.body()}")
           false
         }
       } catch (error: Exception) {

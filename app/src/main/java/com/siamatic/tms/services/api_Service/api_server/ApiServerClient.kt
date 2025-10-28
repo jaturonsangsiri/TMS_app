@@ -14,7 +14,7 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 object ApiServerClient {
-  private const val BASE_URL = "http://192.168.0.111:8888"
+  private const val BASE_URL = "https://tms.siamatic.co.th/smtrack/"
   private var token: String? = null
 
   fun setContext(context: Context) {
