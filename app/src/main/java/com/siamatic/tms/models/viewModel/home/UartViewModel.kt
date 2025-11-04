@@ -25,6 +25,9 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
   private val _fTemp1 = MutableStateFlow<Float?>(null)
   val fTemp1 = _fTemp1.asStateFlow()
 
+  private val _acPower = MutableStateFlow<Boolean?>(null)
+  val acPower = _acPower.asStateFlow()
+
   private val _fTemp2 = MutableStateFlow<Float?>(null)
   val fTemp2 = _fTemp2.asStateFlow()
 
@@ -113,7 +116,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
   private fun processData() {
     // ถ้าไม่ใช่หน้า MainPage ก็ยังต้อง parse data (กันค่าไม่อัปเดต)
     // แต่ไม่ต้อง Log
-    FT311UARTInterface.appendData(readBuffer, readSB) { temp1, temp2, maxRange, minRange ->
+    FT311UARTInterface.appendData(readBuffer, readSB) { temp1, temp2, maxRange, minRange, acPower ->
       val prevTemp1 = _fTemp1.value
       val prevTemp2 = _fTemp2.value
 
@@ -123,6 +126,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
 
       _tempMaxRange.value = maxRange
       _tempMinRange.value = minRange
+      _acPower.value = acPower
 
       // ถ้าไม่ใช่หน้า MainPage ไม่ต้อง Log
       //if (currentPageIndex != 0) return@appendData

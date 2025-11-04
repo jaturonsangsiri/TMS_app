@@ -113,7 +113,7 @@ class FT311UARTInterface() {
       return Pair(maxTemp, minTemp)
     }
 
-      fun appendData(packetData: ByteArray, readSB: MutableList<Byte>, onTemperatureCalculated: (Float?, Float?, Float, Float) -> Unit) {
+      fun appendData(packetData: ByteArray, readSB: MutableList<Byte>, onTemperatureCalculated: (Float?, Float?, Float, Float, Boolean) -> Unit) {
         try {
           readSB.addAll(packetData.toList())
 
@@ -121,6 +121,7 @@ class FT311UARTInterface() {
           var fTemp2: Float? = null
           var tempMinRange = 0f
           var tempMaxRange = 0f
+          var acPower: Boolean = false
 
           while (true) {
             val packet = extractPacket(readSB) ?: break
@@ -135,8 +136,10 @@ class FT311UARTInterface() {
             //Log.d(debugTag, "packet[5]: ${packet[5]}, packet[6]: ${packet[6]}, packet[8]: ${packet[8]}, packet[9]: ${packet[9]}")
             val iTemp1 = parseTemp(packet[5], packet[6])
             val iTemp2 = parseTemp(packet[8], packet[9])
-            //Log.d(debugTag, "iTemp1: $iTemp1, iTemp2: $iTemp2")
+            val powerStatus = if (packet[3].toInt() == 0x00) true else false
 
+            //Log.d(debugTag, "iTemp1: $iTemp1, iTemp2: $iTemp2")
+            acPower = powerStatus
             if (iTemp1 != 0xFFFF) fTemp1 = calculateTemperature(sensorType, iTemp1)
             if (iTemp2 != 0xFFFF) fTemp2 = calculateTemperature(sensorType, iTemp2)
           }
@@ -146,7 +149,7 @@ class FT311UARTInterface() {
           //Log.d(debugTag, "Range: $tempMinRange°C ~ $tempMaxRange°C")
 
           // ส่งผลกลับผ่าน callback
-          onTemperatureCalculated(fTemp1, fTemp2, tempMaxRange, tempMinRange)
+          onTemperatureCalculated(fTemp1, fTemp2, tempMaxRange, tempMinRange, acPower)
 
         } catch (e: Exception) {
           Log.e(debugTag, "Exception in appendData", e)
@@ -277,17 +280,17 @@ class FT311UARTInterface() {
     /***
       For debug
     ***/
-//    // แปลงเป็น String (ถ้าเป็น ASCII/UTF-8)
-//    val dataStr = String(buffer, 0, numBytes)
-//    Log.d(debugTag, "ReadData result (string): $dataStr")
-//
-//
-//    // แปลงเป็น Hex เพื่อ debug ข้อมูล raw
-//    val hexBuilder = StringBuilder()
-//    for (i in 0 until numBytes) {
-//      hexBuilder.append(String.format("%02X ", buffer[i]))
-//    }
-//    Log.d(debugTag, "ReadData result (hex): $hexBuilder")
+   // แปลงเป็น String (ถ้าเป็น ASCII/UTF-8)
+   val dataStr = String(buffer, 0, numBytes)
+   Log.d(debugTag, "ReadData result (string): $dataStr")
+
+
+   // แปลงเป็น Hex เพื่อ debug ข้อมูล raw
+   val hexBuilder = StringBuilder()
+   for (i in 0 until numBytes) {
+     hexBuilder.append(String.format("%02X ", buffer[i]))
+   }
+   Log.d(debugTag, "ReadData result (hex): $hexBuilder")
 
     return true
   }

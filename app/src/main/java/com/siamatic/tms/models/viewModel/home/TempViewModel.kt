@@ -13,6 +13,7 @@ import com.siamatic.tms.constants.IS_SEND_MESSAGE
 import com.siamatic.tms.constants.MESSAGE_REPEAT
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
+import com.siamatic.tms.constants.RECORD_INTERVAL
 import com.siamatic.tms.constants.RETURN_TO_NORMAL
 import com.siamatic.tms.constants.SEND_MESSAGE
 import com.siamatic.tms.constants.SHEET_ID
@@ -21,6 +22,7 @@ import com.siamatic.tms.constants.TEMP_MAX_P2
 import com.siamatic.tms.constants.TEMP_MIN_P1
 import com.siamatic.tms.constants.TEMP_MIN_P2
 import com.siamatic.tms.constants.debugTag
+import com.siamatic.tms.constants.minOptionsLng
 import com.siamatic.tms.database.DatabaseProvider
 import com.siamatic.tms.database.OfflineTemp
 import com.siamatic.tms.database.Temp
@@ -58,9 +60,6 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   val _latestTemp = MutableStateFlow<Pair<Float?, Float?>>(null to null)
   val latestTemp: StateFlow<Pair<Float?, Float?>> = _latestTemp
 
-  private val _interval = MutableStateFlow(5 * 60 * 1000L)
-  val interval: StateFlow<Long?> = _interval
-
   // Get all temperature store in database
   private val _allTemps = MutableStateFlow<List<Temp>>(emptyList())
   val allTemps: StateFlow<List<Temp>> = _allTemps.asStateFlow()
@@ -75,7 +74,6 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   private val mqttPassword = config.get("MQTT_PASSWORD").toString()
   val mqttCommandTopic = config.get("MQTT_COMMAND_TOPIC").toString()
   val mqttSendTempTopic = config.get("MQTT_SEND_TEMP_TOPIC").toString()
-
   val ipAddress = defaultCustomComposable.getDeviceIP().toString()
 
   var isImmediately = prePref.getPreference(IS_SEND_MESSAGE, "Boolean", true) == true
@@ -85,6 +83,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   var isNormal = prePref.getPreference(RETURN_TO_NORMAL, "Boolean", true) == true
   var delayFirst = if (isImmediately) 0L else immmediaMin * 60 * 1000L
   var repeatInterval = repetiMin * 60 * 1000L
+  var interval = minOptionsLng[prePref.getPreference(RECORD_INTERVAL, "String", "5 minute")] ?: 300000L
 
   init {
     startTempTimer()
@@ -107,9 +106,8 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   }
 
   // Updated lasted temp
-  fun updateTemp(fTemp1: Float?, fTemp2: Float?, interval: Long) {
+  fun updateTemp(fTemp1: Float?, fTemp2: Float?) {
     _latestTemp.value = fTemp1 to fTemp2
-    _interval.value = interval
   }
 
   private fun startMQTT() {
@@ -333,7 +331,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           }
         } 
       }
-    }, 0, _interval.value
+    }, 0, interval
     )
   }
 
@@ -385,6 +383,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     isNormal = prePref.getPreference(RETURN_TO_NORMAL, "Boolean", true) == true
     delayFirst = if (isImmediately) 0L else immmediaMin * 60 * 1000L
     repeatInterval = repetiMin * 60 * 1000L
+    interval = minOptionsLng[prePref.getPreference(RECORD_INTERVAL, "String", "5 minute")] ?: 300000L
   }
 
   // Reset all records

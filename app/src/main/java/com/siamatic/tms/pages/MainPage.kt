@@ -88,6 +88,8 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 
   // Check connection
   val isConnect by uartViewModel.isConnect.collectAsState()
+  // AC Power checking
+  val acPower by uartViewModel.acPower.collectAsState()
 
   // Painter resource for wifi icon.
   var wifiIcon by remember { mutableIntStateOf(R.drawable.no_wifi) }  // WIFI not connect
@@ -165,8 +167,8 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   LaunchedEffect(fTemp1, fTemp2) {
     val roundedTemp1 = fTemp1?.let { "%.2f".format(it).toFloat() }
     val roundedTemp2 = fTemp2?.let { "%.2f".format(it).toFloat() }
-    isOutOfRange1.value = defaultCustomComposable.checkRangeTemperature(fTemp1, minTemp1, maxTemp1)
-    isOutOfRange2.value = defaultCustomComposable.checkRangeTemperature(fTemp2, minTemp2, maxTemp2)
+    isOutOfRange1.value = defaultCustomComposable.checkRangeTemperature(fTemp1?.plus(tempAdjust1), minTemp1, maxTemp1)
+    isOutOfRange2.value = defaultCustomComposable.checkRangeTemperature(fTemp2?.plus(tempAdjust2), minTemp2, maxTemp2)
 
     if ((roundedTemp1 != null || roundedTemp2 != null) && (roundedTemp1 != previousTemp1 || roundedTemp2 != previousTemp2)) {
       // อัปเดต previous
@@ -227,6 +229,11 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
           .padding(start = 10.dp), painter = painterResource(
           if (isConnect == true) R.drawable.green_led // SerialPort connected
           else R.drawable.red_led // SerialPort not connect
+        ), contentDescription = "")
+        // AC icon status
+        Image(modifier = Modifier.size(90.dp).padding(start = 10.dp), painter = painterResource(
+          if (acPower == true) R.drawable.plug_in
+          else R.drawable.unplug
         ), contentDescription = "")
         // WIFI Status
         Icon(modifier = Modifier

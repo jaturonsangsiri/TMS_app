@@ -37,6 +37,7 @@ import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
 import com.siamatic.tms.constants.RECORD_INTERVAL
 import com.siamatic.tms.constants.SHEET_ID
+import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.minOptionsLng
 import com.siamatic.tms.constants.tabsName
 import com.siamatic.tms.defaultCustomComposable
@@ -58,8 +59,6 @@ fun HomePage(controlRoute: NavHostController) {
 
   val fTemp1 by uartViewModel.fTemp1.collectAsState()
   val fTemp2 by uartViewModel.fTemp2.collectAsState()
-
-  val tag = sharedPref.getPreference(RECORD_INTERVAL, "String", "5 minute")
 
   // Call UART init only one time. Prevent call every time slide page
   LaunchedEffect(Unit) {
@@ -88,11 +87,9 @@ fun HomePage(controlRoute: NavHostController) {
 
     // Update real temperature (temperature + adjust)
     if (fTemp1 != null && fTemp2 != null) {
-      minOptionsLng[tag]?.let {
-        tempViewModel.updateTemp(fTemp1!! + tempAdjust1, fTemp2!! + tempAdjust2, it)
-      }
+      tempViewModel.updateTemp(fTemp1!! + tempAdjust1, fTemp2!! + tempAdjust2)
     } else {
-      tempViewModel.updateTemp(null, null, 300000)
+      tempViewModel.updateTemp(null, null)
     }
   }
 
