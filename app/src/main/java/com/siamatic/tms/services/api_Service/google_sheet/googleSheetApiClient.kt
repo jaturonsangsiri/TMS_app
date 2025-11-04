@@ -11,7 +11,7 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 object GoogleSheetApiClient {
-    private const val BASE_URL = "https://script.google.com/macros/s/AKfycbzm7W2J9HvCoovioM3q2GxQWfB18-q00PtuiTlzTDO6ohs5wey94t0RdiRCkof3FrXwVw/"
+    private const val BASE_URL = "https://script.google.com/macros/s/AKfycby50ru020uW65kFJCX00WbVqhhBRdCo_ZWm2xyK1VzE6ZNCDE2U1zXERPt5VjN8ZkJP/"
 
     private fun getHttpClient(): OkHttpClient {
         return try {

@@ -1,5 +1,8 @@
 package com.siamatic.tms.pages
 
+import android.app.AlarmManager
+import android.app.Application
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -7,6 +10,7 @@ import android.content.IntentFilter
 import android.graphics.Typeface
 import android.media.MediaPlayer
 import android.net.ConnectivityManager
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.TextClock
@@ -45,6 +49,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
 import com.siamatic.tms.composables.home.ProbeBox
@@ -57,11 +62,19 @@ import com.siamatic.tms.constants.TEMP_MAX_P1
 import com.siamatic.tms.constants.TEMP_MAX_P2
 import com.siamatic.tms.constants.TEMP_MIN_P1
 import com.siamatic.tms.constants.TEMP_MIN_P2
+import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.Probe
+import com.siamatic.tms.models.viewModel.ApiServerViewModel
+import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.models.viewModel.home.UartViewModel
+import com.siamatic.tms.services.ReportTimer
 import com.siamatic.tms.ui.theme.BabyBlue
 import com.siamatic.tms.util.sharedPreferencesClass
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import java.util.Calendar
 
 @Composable
 fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
@@ -70,7 +83,8 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
 
   val context = LocalContext.current
   val uartViewModel: UartViewModel = viewModel()
-  //val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+  val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
+  val apiServerViewModel = ApiServerViewModel()
 
   // Check connection
   val isConnect by uartViewModel.isConnect.collectAsState()
@@ -81,14 +95,20 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   val tempAdjust1 = sharedPref.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
   val tempAdjust2 = sharedPref.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
 
+  // Report timer variables
+  val reportTimers = remember { mutableStateListOf<ReportTimer>().apply { repeat(6) { add(
+    ReportTimer()
+  ) } } }
+
   // Check for internet show Dialog
   var shownNoWifiToast by remember { mutableStateOf(false) }
   val wifiReceiver = remember {
     object : BroadcastReceiver() {
       override fun onReceive(context: Context?, intent: Intent?) {
         val cm = context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networkInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-        if (networkInfo?.isConnected == true) {
+        val networkInfo = cm.activeNetworkInfo
+
+        if (networkInfo?.type == ConnectivityManager.TYPE_WIFI && networkInfo?.isConnected == true) {
           wifiIcon = R.drawable.wifi
           //Log.i(debugTag, "WIFI is connected")
           if (shownNoWifiToast) {
@@ -165,7 +185,7 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
     }
   }
 
-  // Use LaunchedEffect + Delay instead of Timer (safer to write)
+  // Use LaunchedEffect to register and unregister WIFI BroadcastReceiver
   DisposableEffect(Unit) {
     val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     context.registerReceiver(wifiReceiver, filter)
@@ -174,8 +194,29 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
     }
   }
 
-  // If temperature is more than MaxTemp or less than MinTemp play the alarm
+  // ตั้งค่าการแจ้งเตือน Report ส่ง notification ขึ้น API
+  LaunchedEffect(Unit) {
+    for(index in 1..6) {
+      val isReport = sharedPref.getPreference("IS_REPORT$index", "Boolean", false) == true
+      val reportTime = sharedPref.getPreference("REPORT${index}_TIME", "Int", 0).toString().toInt()
+      if (isReport) {
+        reportTimers[index - 1].startDairy(reportTime, 0, tempViewModel, apiServerViewModel)
+        Log.i(debugTag, "Set notification report$index time: ${reportTime.toString().format("%.2f", "0")}:00")
+      }
+    }
 
+//    val timer = ReportTimer()
+//    timer.startDairy(15,56,tempViewModel,apiServerViewModel)
+//    Log.i(debugTag, "Set notification report1 time: 15:56")
+  }
+
+  DisposableEffect(Unit) {
+    onDispose {
+      reportTimers.forEach { it.stop() }
+    }
+  }
+
+  // If temperature is more than MaxTemp or less than MinTemp play the alarm
   Column(modifier = Modifier.padding(paddingValues)) {
     // Box Status
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -250,4 +291,19 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
       )
     }
   }
+}
+
+fun reportTimeTrigger(hour: Int): Long {
+  val calendar = Calendar.getInstance()
+  calendar.set(Calendar.HOUR_OF_DAY, hour)
+  calendar.set(Calendar.MINUTE, 0)
+  calendar.set(Calendar.SECOND, 0)
+  calendar.set(Calendar.MILLISECOND, 0)
+
+  // ถ้าเวลานี้ผ่านไปแล้ว ให้ตั้งพรุ่งนี้
+  if (calendar.timeInMillis <= System.currentTimeMillis()) {
+    calendar.add(Calendar.DAY_OF_MONTH, 1)
+  }
+
+  return calendar.timeInMillis
 }

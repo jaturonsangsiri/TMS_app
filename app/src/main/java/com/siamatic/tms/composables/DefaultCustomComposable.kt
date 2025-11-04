@@ -240,16 +240,6 @@ class DefaultCustomComposable {
     }
   }
 
-  fun showAlertDialog(context: Context, message: String) {
-    val alertDialog = AlertDialog.Builder(context)
-    alertDialog.setTitle("Error")
-    alertDialog.setMessage(message)
-    alertDialog.setPositiveButton("OK") { dialog: DialogInterface, _ ->
-      dialog.dismiss()
-    }
-    alertDialog.show()
-  }
-
   // To covert Long to "2025-08-28"
   fun convertLongToDateOnly(time: Long): String {
     val date = Date(time)
@@ -285,9 +275,9 @@ class DefaultCustomComposable {
     return displayMetrics.heightPixels < 700
   }
 
-  // String format "3" -> "03"
-  fun formatTwoIndex(txt: String, type: String): String {
-    return if (type == "Start") txt.padStart(2, '0') else txt.padEnd(2, '0')
+  // String format "20.3" -> "20.30"
+  fun formatTemp(value: Float): String {
+    return String.format("%.2f", value)
   }
 
   // Get device address ip
@@ -320,17 +310,12 @@ class DefaultCustomComposable {
     return JSONObject(jsonTxt)
   }
 
-  // Check temperature is not normal in send email and send google sheet
-  fun checkTempOutOfRange(temp: Float?, min: Float?, max: Float?): String {
-    return if (temp != null && min != null && max != null) {
-      if ((temp ?: 0f) < min || (temp ?: 0f) > max) "Warring Temp is out of range" else "Normal Temp"
-    } else {
-     "Null"
-    }
-  }
-
   // Check Range If temperature is more than MaxTemp or less than MinTemp play the alarm
   fun checkRangeTemperature(fTemp: Float?, minTemp: Float?, maxTemp: Float?): Boolean {
     return if (fTemp != null && minTemp != null && maxTemp != null) fTemp!! < minTemp!! || fTemp > maxTemp!! else false
+  }
+
+  fun responseLog(title: String, code: Int, body: String): String {
+    return "$title status code: $code\nResponse from $title: $body"
   }
 }

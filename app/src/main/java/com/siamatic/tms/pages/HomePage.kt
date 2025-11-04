@@ -2,6 +2,7 @@ package com.siamatic.tms.pages
 
 import com.siamatic.tms.models.viewModel.home.UartViewModel
 import android.annotation.SuppressLint
+import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -26,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.siamatic.tms.constants.DEVICE_API_TOKEN
@@ -35,7 +37,6 @@ import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
 import com.siamatic.tms.constants.RECORD_INTERVAL
 import com.siamatic.tms.constants.SHEET_ID
-import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.minOptionsLng
 import com.siamatic.tms.constants.tabsName
 import com.siamatic.tms.defaultCustomComposable
@@ -113,7 +114,7 @@ fun HomePage(controlRoute: NavHostController) {
                 pagerState.animateScrollToPage(index)
               }
             },
-            text = { Text(title, fontSize = 14.sp, fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal) }
+            text = { Text(title, fontSize = 13.sp, fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal) }
           )
         }
       }
@@ -128,7 +129,8 @@ fun HomePage(controlRoute: NavHostController) {
         4 -> MessagePage(paddingValues)
         5 -> ManageSim(paddingValues)
         6 -> AdjustPage(paddingValues, fTemp1, fTemp2)
-        7 -> ExitPage(paddingValues)
+        7 -> ReportPage(paddingValues)
+        8 -> ExitPage(paddingValues)
       }
     }
   }

@@ -17,7 +17,7 @@ object ApiServerClient {
   private const val BASE_URL = "https://tms.siamatic.co.th/smtrack/"
   private var token: String? = null
 
-  fun setContext(context: Context) {
+  fun setToken(context: Context) {
     token = sharedPreferencesClass(context).getPreference(DEVICE_API_TOKEN, "String", "").toString()
   }
 

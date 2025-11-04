@@ -8,7 +8,7 @@ val minOptionsLng = minuteOptions.associateWith {
   val (num, unit) = it.split(" ")
   num.toLong() * 60 * 1000L * if (unit == "hour") 60 else 1
 }
-val tabsName = listOf("MAIN", "GRAPH", "TABLE", "SETUP", "MESSAGE", "MENAGE SIM", "ADJUST", "EXIT")
+val tabsName = listOf("MAIN", "GRAPH", "TABLE", "SETUP", "MESSAGE", "SIM", "ADJUST", "REPORT", "EXIT")
 
 const val debugTag = "Debug"
 const val timeFormat = "HH:mm"

@@ -47,7 +47,7 @@ class SendEmail {
     val adjTemp1 = prefev.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
     val adjTemp2 = prefev.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f
     val ipAddress = defaultCustomComposable.getDeviceIP().toString()
-    Log.d(debugTag, "email pass: $password, device id: $deviceId")
+    //Log.d(debugTag, "email pass: $password, device id: $deviceId")
     if (password != "" && deviceId != "") {
       try {
         val mailProperties: Properties = System.getProperties()
@@ -85,7 +85,7 @@ class SendEmail {
 
           // data rows
           data.forEachIndexed { index, value ->
-            val txt = "${index + 1},$deviceId,$ipAddress,${value.temp1},${defaultCustomComposable.checkTempOutOfRange(value.temp1.toString().toFloat(), minTemp1, maxTemp1)},$minTemp1,$maxTemp1,$adjTemp1,${value.temp2},${defaultCustomComposable.checkTempOutOfRange(value.temp2.toString().toFloat(), minTemp2, maxTemp2)},$minTemp2,$maxTemp2,$adjTemp2,${value.timeStr},${value.dateStr}"
+            val txt = "${index + 1},$deviceId,$ipAddress,${value.temp1},${if (defaultCustomComposable.checkRangeTemperature(value.temp1.toString().toFloat(), minTemp1, maxTemp1)) "Warring Temp is out of range" else "Normal Temp"},$minTemp1,$maxTemp1,$adjTemp1,${value.temp2},${if (defaultCustomComposable.checkRangeTemperature(value.temp2.toString().toFloat(), minTemp2, maxTemp2)) "Warring Temp is out of range" else "Normal Temp"},$minTemp2,$maxTemp2,$adjTemp2,${value.timeStr},${value.dateStr}"
             //Log.i(debugTag, "Line: $txt")
             csv.write(txt)
             csv.newLine()

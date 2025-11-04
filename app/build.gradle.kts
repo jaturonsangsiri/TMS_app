@@ -76,6 +76,8 @@ dependencies {
   implementation(libs.sun.android.mail)
   implementation(libs.android.activation)
 
+  implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
+
   kapt(libs.androidx.room.compiler)
   implementation("androidx.datastore:datastore-preferences:1.1.1")
 

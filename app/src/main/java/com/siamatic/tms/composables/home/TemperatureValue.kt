@@ -19,12 +19,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.siamatic.tms.R
+import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.ui.theme.BabyBlue
 
 @Composable
 fun TemperatureValue(temperature: Float?, isOver: Boolean, modifier: Modifier = Modifier) {
   val tem: List<String> = if (temperature != null) {
-    String.format("%.2f", temperature).split(".")
+    defaultCustomComposable.formatTemp(temperature).split(".")
   } else {
     listOf("--", "--")
   }
@@ -33,8 +34,7 @@ fun TemperatureValue(temperature: Float?, isOver: Boolean, modifier: Modifier = 
     modifier = modifier,
     verticalAlignment = Alignment.Bottom,
     horizontalArrangement = Arrangement.Center
-  ) {
-    Text(
+  ) {    Text(
       tem[0],
       fontSize = 80.sp,
       fontWeight = FontWeight.Bold,

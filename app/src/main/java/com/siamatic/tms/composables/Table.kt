@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.viewModel.home.TempViewModel
 
 @Composable
@@ -49,8 +50,8 @@ fun MainTables(startDate: Long? = 0L) {
         TableCell(text = "${index + 1}", weight = 0.1f)
         TableCell(text = item.dateStr, weight = 0.3f)
         TableCell(text = item.timeStr, weight = 0.2f)
-        TableCell(text = String.format("%.2f", item.temp1), weight = 0.2f)
-        TableCell(text = String.format("%.2f", item.temp2), weight = 0.2f)
+        TableCell(text = item.temp1?.let { defaultCustomComposable.formatTemp(it) } ?: "", weight = 0.2f)
+        TableCell(text = item.temp2?.let { defaultCustomComposable.formatTemp(it) } ?: "", weight = 0.2f)
       }
     }
   }
