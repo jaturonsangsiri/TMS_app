@@ -144,8 +144,8 @@ class FT311UARTInterface() {
             if (iTemp2 != 0xFFFF) fTemp2 = calculateTemperature(sensorType, iTemp2)
           }
 
-          Log.d(debugTag, "Temp probe1: ${fTemp1 ?: "⚠ Not found"} °C")
-          Log.d(debugTag, "Temp probe2: ${fTemp2 ?: "⚠ Not found"} °C")
+          Log.d(debugTag, "Temp probe1: $fTemp1 °C")
+          Log.d(debugTag, "Temp probe2: $fTemp2 °C")
           //Log.d(debugTag, "Range: $tempMinRange°C ~ $tempMaxRange°C")
 
           // ส่งผลกลับผ่าน callback
@@ -160,16 +160,20 @@ class FT311UARTInterface() {
      * ดึง packet สมบูรณ์จาก buffer
      */
     private fun extractPacket(buffer: MutableList<Byte>): ByteArray? {
+      if (buffer.isEmpty()) return null // ✅ ป้องกัน index out of bounds ตั้งแต่ต้น
+
       val startIndex = buffer.indexOf(0x41.toByte()) // 'A' = 0x41
-      if (startIndex == -1 || buffer.size - startIndex < 12) return null
+      if (startIndex == -1) return null               // ✅ ยังไม่เจอจุดเริ่มต้น
+      if (buffer.size - startIndex < 12) return null  // ✅ ข้อมูลยังไม่ครบ 12 bytes
 
       val endIndex = startIndex + 11
-      if (buffer[endIndex] != 0x0D.toByte()) return null
+      if (endIndex >= buffer.size) return null        // ✅ ตรวจซ้ำอีกชั้น
+      if (buffer[endIndex] != 0x0D.toByte()) return null // ✅ ตรวจจบ packet
 
-      // ดึง packet
+      // ✅ ถึงตรงนี้ปลอดภัยแน่นอน
       val packet = buffer.subList(startIndex, startIndex + 12).toByteArray()
 
-      // ลบออกจาก buffer
+      // ลบ packet ที่อ่านแล้ว
       repeat(startIndex + 12) { buffer.removeAt(0) }
 
       return packet
@@ -392,6 +396,7 @@ class FT311UARTInterface() {
       }
 
       if (!READ_ENABLE) {
+        Log.d(debugTag, "ReadThread started")
         READ_ENABLE = true
         readThread = ReadThread(inputStream)
         readThread!!.start()

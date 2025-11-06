@@ -78,8 +78,8 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
               countTempError++
             }
 
-            // If can't get temperature 6 times
-            if (countTempError >= 6) {
+            // If can't get temperature 3 times
+            if (countTempError >= 3) {
               countTempError = 0
               _fTemp1.value = null
               _fTemp2.value = null

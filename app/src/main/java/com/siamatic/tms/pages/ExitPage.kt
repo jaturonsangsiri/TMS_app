@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.system.exitProcess
 
 @SuppressLint("ContextCastToActivity")
 @Composable
@@ -29,7 +30,11 @@ fun ExitPage(paddingValues: PaddingValues) {
     val activity = (LocalContext.current as? Activity)
     Button(modifier = Modifier.width(300.dp).height(70.dp), onClick = {
         activity?.stopLockTask() // Exit Lock Task Mode
-        activity?.finish() // Close the Activity
+        activity?.finishAffinity() // Close the Activity
+
+        // ปิด process ให้เหมือนปัดออกจาก Recent Apps
+        android.os.Process.killProcess(android.os.Process.myPid())
+        exitProcess(0)
       }, shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.White)) {
       Text("Click here to Exit App", fontSize = 21.sp, fontWeight = FontWeight.W600, color = Color.Blue.copy(alpha = 0.7f))
     }
