@@ -52,8 +52,8 @@ class ReportTimer {
       Log.d(debugTag, "Temperature report probe 2 $date $time, temp is $roundedTemp2 °C")
 
       CoroutineScope(Dispatchers.IO).launch {
-        apiServerViewModel.notifyNotNormalTemp("Report temp to server probe 1", tempViewModel.serialNumber, "N/A", roundedTemp1, roundedTemp1 - tempViewModel.adjTemp1, "Temperature report probe 1 $date $time, temp is $roundedTemp1 °C",  date, time)
-        apiServerViewModel.notifyNotNormalTemp("Report temp to server probe 2", tempViewModel.serialNumber, "N/A", roundedTemp2, roundedTemp2 - tempViewModel.adjTemp2, "Temperature report probe 2 $date $time, temp is $roundedTemp2 °C",  date, time)
+        apiServerViewModel.notifyNotNormalTemp("Report temp to server probe 1", "${tempViewModel.serialNumber}(1)", "N/A", roundedTemp1, roundedTemp1 - tempViewModel.adjTemp1, "Temperature report probe 1 $date $time, temp is $roundedTemp1 °C",  date, time)
+        apiServerViewModel.notifyNotNormalTemp("Report temp to server probe 2", "${tempViewModel.serialNumber}(2)", "N/A", roundedTemp2, roundedTemp2 - tempViewModel.adjTemp2, "Temperature report probe 2 $date $time, temp is $roundedTemp2 °C",  date, time)
       }
     } else {
       Log.e(debugTag, "No temp to send Report!")

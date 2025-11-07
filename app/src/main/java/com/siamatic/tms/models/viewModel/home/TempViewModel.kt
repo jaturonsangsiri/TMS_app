@@ -193,12 +193,12 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
             if (isOnetime && !isDelayFirst1 && isOutOfRange1 && isSendOneTime1) {
               isSendOneTime1 = false
               Log.i(debugTag, "อุณหภูมิ probe 1 อุณหภูมิเกิน")
-              apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", serialNumber, "N/A", roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, "Probe 1 is out of range",  date, time)
+              apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", "N/A", roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, "Probe 1 is out of range",  date, time)
             }
             if (isOnetime && !isDelayFirst2 && isOutOfRange2 && isSendOneTime2) {
               isSendOneTime2 = false
               Log.i(debugTag, "อุณหภูมิ probe 2 อุณหภูมิเกิน")
-              apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", serialNumber, "N/A", roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, "Probe 2 is out of range",  date, time)
+              apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", "N/A", roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, "Probe 2 is out of range",  date, time)
             }
 
             // 3) ถ้าค่า isOnetime = false จะแจ้งเตือนซ้ำเรื่อยๆ
@@ -215,7 +215,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
 
                     if (isOutOfRange1) {
                       Log.i(debugTag, "อุณหภูมิ probe 1 อุณหภูมิเกิน")
-                      apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", serialNumber, "N/A", roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, "Probe 1 is out of range",  date, time)
+                      apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", "N/A", roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, "Probe 1 is out of range",  date, time)
                     } else {
                       intervalTimer1?.cancel()
                       intervalTimer1 = null
@@ -236,7 +236,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
 
                     if (isOutOfRange2) {
                       Log.i(debugTag, "อุณหภูมิ probe 2 อุณหภูมิเกิน")
-                      apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", serialNumber, "N/A", roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, "Probe 2 is out of range",  date, time)
+                      apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", "N/A", roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, "Probe 2 is out of range",  date, time)
                     } else {
                       intervalTimer2?.cancel()
                       intervalTimer2 = null
@@ -258,7 +258,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
               // ส่งการแจ้งเตือนหากมีการเซ็ตส่งการแจ้งเตือนเมื่ออุณหภูมิกลับสู่ช่วงปกติ isNormal
               if (isNormal) {
                 Log.i(debugTag, "ส่งการแจ้งเตือนอุณหภูมิ probe 1 กลับเข้าสู่ช่วงปกติ")
-                apiServerViewModel.notifyNotNormalTemp("Probe 1 is returned to normal", serialNumber, "N/A", roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, "Probe 1 is returned to normal",  date, time)
+                apiServerViewModel.notifyNotNormalTemp("Probe 1 is returned to normal", "$serialNumber(1)", "N/A", roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, "Probe 1 is returned to normal",  date, time)
               }
             }
             if (!isOutOfRange2 && wasOutOfRange2) {
@@ -271,7 +271,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
               // ส่งการแจ้งเตือนหากมีการเซ็ตส่งการแจ้งเตือนเมื่ออุณหภูมิกลับสู่ช่วงปกติ isNormal
               if (isNormal) {
                 Log.i(debugTag, "ส่งการแจ้งเตือนอุณหภูมิ probe 2 กลับเข้าสู่ช่วงปกติ")
-                apiServerViewModel.notifyNotNormalTemp("Probe 2 is returned to normal", serialNumber, "N/A", roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, "Probe 2 is returned to normal",  date, time)
+                apiServerViewModel.notifyNotNormalTemp("Probe 2 is returned to normal", "$serialNumber(2)", "N/A", roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, "Probe 2 is returned to normal",  date, time)
               }
             }
           }
@@ -339,7 +339,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     var success = false
     viewModelScope.launch(Dispatchers.IO) {
       // status = สภานะตู้ ซึ่งใน TMS ยังไม่มีเซ็นเซอร์ประตู
-      val addedAPI = async { apiServerViewModel.addTemp(title = "Add temp to server", mcuId = serialNumber, status = "N/A", tempValue = temp, realValue = realTemp, date = date, time = time) }
+      val addedAPI = async { apiServerViewModel.addTemp(title = "Add temp to server", mcuId = "$serialNumber${if (probeName == "Probe 1") "(1)" else "(2)"}", status = "N/A", tempValue = temp, realValue = realTemp, date = date, time = time) }
       val addedGS = async { googleViewModel.addTemperatureToGoogleSheet("add temp to google sheet", sheetId = sheetId, serialNumber = serialNumber, probe = probeName, temp = temp, acStatus = if (defaultCustomComposable.checkRangeTemperature(temp, minTemp, maxTemp)) "Warring Temp is out of range" else "Normal Temp", machineIP = ipAddress, minTemp = minTemp, maxTemp = maxTemp, adjTemp = adjTemp, dateTime = "$date $time") }
       if (addedAPI.await() == true && addedGS.await() == true) {
         success = true
