@@ -72,6 +72,9 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   implementation(libs.androidx.room.ktx)
 
+  // work manager
+  implementation(libs.androidx.work.runtime.ktx)
+
   // Email library
   implementation(libs.sun.android.mail)
   implementation(libs.android.activation)

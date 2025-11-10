@@ -12,6 +12,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 import com.siamatic.tms.composables.DefaultCustomComposable
 import com.siamatic.tms.configs.Routes
@@ -25,6 +27,8 @@ import com.siamatic.tms.models.viewModel.home.TempViewModel
 import com.siamatic.tms.models.viewModel.home.UartViewModel
 import com.siamatic.tms.ui.theme.TMSTheme
 import com.siamatic.tms.util.sharedPreferencesClass
+import com.siamatic.tms.work_manager.worker.OpenAppWorker
+import java.util.concurrent.TimeUnit
 
 val defaultCustomComposable = DefaultCustomComposable()
 
@@ -81,19 +85,6 @@ class MainActivity : ComponentActivity() {
     }
   }
 
-  // สร้าง Application ใหม่เมื่อถูกทำลาย
-  private fun onCreateNewApplication() {
-    if (isRestartingApp) return
-    isRestartingApp = true
-
-    val context = applicationContext
-    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-    intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-    context.startActivity(intent)
-
-    Runtime.getRuntime().exit(0) // ออกจาก process เดิม
-  }
-
   // ปิดปุ่มกดย้อนกลับ
   override fun onBackPressed() {
     // Do nothing
@@ -104,26 +95,5 @@ class MainActivity : ComponentActivity() {
   override fun onUserLeaveHint() {
     super.onUserLeaveHint()
     defaultCustomComposable.showToast(this, "Please don't leave app!")
-
-    // กลับมาใน app
-    onCreateNewApplication()
-  }
-
-  // ปิดปุ่ม Recent Apps
-  override fun onPause() {
-    super.onPause()
-//    if (!isFinishing && !isRestartingApp) {
-//      defaultCustomComposable.showToast(this, "Please don't leave app!")
-//      // กลับมาใน app
-//      onCreateNewApplication()
-//    }
-  }
-
-  // เมื่อ activity ถูกทำลาย ให้เรียก Application ขึ้นมาใหม่
-  override fun onDestroy() {
-    super.onDestroy()
-    if (!isRestartingApp) {
-      onCreateNewApplication()
-    }
   }
 }

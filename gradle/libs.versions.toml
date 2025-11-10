@@ -20,6 +20,7 @@ jitlib = "1.0.0"
 compose-plugin = "1.8.2"
 room = "2.7.2"
 sunAndroidMail = "1.6.7"
+workRuntimeKtx = "2.11.0"
 
 [libraries]
 android-activation = { module = "com.sun.mail:android-activation", version.ref = "androidActivation" }
@@ -28,6 +29,7 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
