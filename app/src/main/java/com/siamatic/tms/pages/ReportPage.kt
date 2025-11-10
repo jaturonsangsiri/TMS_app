@@ -59,7 +59,6 @@ fun ReportPage(paddingValues: PaddingValues) {
 
   val isTab3 = defaultCustomComposable.getDeviceHeightPixels(appContext)
 
-  // 👇 ย้ายออกมานอก forEach
   var selectedReport by remember { mutableStateOf<ReportSetting?>(null) }
 
   Column(

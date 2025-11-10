@@ -57,23 +57,18 @@ fun MessagePage(paddingValues: PaddingValues) {
   // ******  For responsive ui *******
   val isTab3 = defaultCustomComposable.getDeviceHeightPixels(context)
 
-  LaunchedEffect(Unit) {
-    // Log.d(debugTag, "Is send message: ${isImmediately.value}")
-    // Log.d(debugTag, "send message minute: ${immmediaMin.intValue}")
-    // Log.d(debugTag, "Is message repeat: ${isOnetime.value}")
-    // Log.d(debugTag, "message repeat minute: ${repetiMin.intValue}")
-    // Log.d(debugTag, "Is return to normal: ${isNormal.value}")
-
-    if (!isImmediately.value && immmediaMin.intValue < 10) immmediaMin.intValue = 10
-    if (!isOnetime.value && repetiMin.intValue < 5) repetiMin.intValue = 5
-  }
+  // Log.d(debugTag, "Is send message: ${isImmediately.value}")
+  // Log.d(debugTag, "send message minute: ${immmediaMin.intValue}")
+  // Log.d(debugTag, "Is message repeat: ${isOnetime.value}")
+  // Log.d(debugTag, "message repeat minute: ${repetiMin.intValue}")
+  // Log.d(debugTag, "Is return to normal: ${isNormal.value}")
 
   Column(modifier = Modifier.padding(paddingValues).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
     Card(modifier = Modifier.fillMaxWidth().height(if (isTab3) 200.dp else 190.dp).padding(end = 14.dp, start = 14.dp, top = 9.5.dp, bottom = 7.dp)) {
       Column(modifier = Modifier.fillMaxSize().padding(14.dp)) {
         ContentRadioBox("1.Sending message for the first time.", isTab3, isImmediately.value, "Immediately", "After", { isImmediately.value = true }, { isImmediately.value = false })
         Row(modifier = Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-          defaultCustomComposable.BuildAddMinusControl(!isImmediately.value, { if (immmediaMin.intValue != 10) { immmediaMin.intValue -= 1 } }, !isImmediately.value, { immmediaMin.intValue += 1 }, immmediaMin.intValue.toString())
+          defaultCustomComposable.BuildAddMinusControl(!isImmediately.value, { if (immmediaMin.intValue != 5) { immmediaMin.intValue -= 1 } }, !isImmediately.value, { immmediaMin.intValue += 1 }, immmediaMin.intValue.toString())
         }
       }
     }
@@ -83,7 +78,7 @@ fun MessagePage(paddingValues: PaddingValues) {
         Column(modifier = Modifier.fillMaxSize().padding(14.dp)) {
           ContentRadioBox("2.Repetition of message.", isTab3, isOnetime.value, "One time", "Every", { isOnetime.value = true }, { isOnetime.value = false })
           Row(modifier = Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            defaultCustomComposable.BuildAddMinusControl(!isOnetime.value, { if (repetiMin.intValue != 5) { repetiMin.intValue -= 1 } }, !isOnetime.value, { repetiMin.intValue += 1 }, repetiMin.intValue.toString())
+            defaultCustomComposable.BuildAddMinusControl(!isOnetime.value, { if (repetiMin.intValue != 10) { repetiMin.intValue -= 1 } }, !isOnetime.value, { repetiMin.intValue += 1 }, repetiMin.intValue.toString())
             Spacer(modifier = Modifier.width(4.dp))
             Text(text = "min. warning", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
           }
@@ -100,7 +95,7 @@ fun MessagePage(paddingValues: PaddingValues) {
     Spacer(modifier = Modifier.height(20.dp))
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
       Button(onClick = {
-        if (immmediaMin.intValue > 10 || repetiMin.intValue > 5) {
+        if (immmediaMin.intValue >= 5 && repetiMin.intValue >= 10) {
           // Save message sending settings data
 //          Log.d(debugTag, "Is send message: ${isImmediately.value}")
 //          Log.d(debugTag, "send message minute: ${immmediaMin.intValue}")
@@ -114,8 +109,10 @@ fun MessagePage(paddingValues: PaddingValues) {
           sharedPref.savePreference(RETURN_TO_NORMAL, isNormal.value)
 
           Toast.makeText(context, "Saved message settings", Toast.LENGTH_SHORT).show()
-        } else if (immmediaMin.intValue <= 10 || repetiMin.intValue <= 5) {
-          Toast.makeText(context, "Minute is valid", Toast.LENGTH_SHORT).show()
+        } else if (immmediaMin.intValue < 5) {
+          Toast.makeText(context, "Immediately minute is less or equal 5!", Toast.LENGTH_SHORT).show()
+        } else if (repetiMin.intValue < 10) {
+          Toast.makeText(context, "Repeat minute is less or equal 10!", Toast.LENGTH_SHORT).show()
         } else {
           Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
         }

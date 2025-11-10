@@ -41,7 +41,6 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
   val tempMaxRange = _tempMaxRange.asStateFlow()
   private var isInit = false
 
-  private var currentPageIndex: Int = 0
   private var countTempError: Int = 0
   private val _isConnect = MutableStateFlow<Boolean?>(null)
   val isConnect = _isConnect.asStateFlow()
@@ -86,7 +85,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
               // Update the connect icon in MainPage
               _isConnect.value = false
 
-              resetHardware(context)
+              resetHardware()
             }
 
             Thread.sleep(2000)
@@ -101,7 +100,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
   }
 
   // Function to reset hardware & reset variables in App
-  private fun resetHardware(context: Context) {
+  private fun resetHardware() {
     try {
       uartInterface?.destroyAccessory() // Close the input / output stream and stop ReadThread
       Thread.sleep(3000)
@@ -128,23 +127,14 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
       _tempMinRange.value = minRange
       _acPower.value = acPower
 
-      // ถ้าไม่ใช่หน้า MainPage ไม่ต้อง Log
-      //if (currentPageIndex != 0) return@appendData
-
       // Debug log เฉพาะตอนค่าเปลี่ยน
       //if (temp1 != prevTemp1) Log.d(debugTag, "Temp probe1: ${String.format("%.2f", temp1)}°C")
       //if (temp2 != prevTemp2) Log.d(debugTag, "Temp probe2: ${String.format("%.2f", temp2)}°C")
     }
   }
 
-  // Set Page current
-  fun setCurrentPage(index: Int) {
-    currentPageIndex = index
-  }
-
   // Destroy service, background work prevent from crash
   override fun onCleared() {
-
     super.onCleared()
     isReading = false
 

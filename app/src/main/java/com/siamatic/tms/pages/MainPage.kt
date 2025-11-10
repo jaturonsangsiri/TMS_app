@@ -71,13 +71,9 @@ import com.siamatic.tms.models.viewModel.home.UartViewModel
 import com.siamatic.tms.services.ReportTimer
 import com.siamatic.tms.ui.theme.BabyBlue
 import com.siamatic.tms.util.sharedPreferencesClass
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
-import java.util.Calendar
 
 @Composable
-fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
+fun MainPage(paddingValues: PaddingValues) {
   var isOutOfRange1 = remember { mutableStateOf(false) } // Probe1
   var isOutOfRange2 = remember { mutableStateOf(false) } // Probe2
 
@@ -85,6 +81,8 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   val uartViewModel: UartViewModel = viewModel()
   val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
   val apiServerViewModel = ApiServerViewModel()
+  val fTemp1 by uartViewModel.fTemp1.collectAsState()
+  val fTemp2 by uartViewModel.fTemp2.collectAsState()
 
   // Check connection
   val isConnect by uartViewModel.isConnect.collectAsState()
@@ -298,19 +296,4 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
       )
     }
   }
-}
-
-fun reportTimeTrigger(hour: Int): Long {
-  val calendar = Calendar.getInstance()
-  calendar.set(Calendar.HOUR_OF_DAY, hour)
-  calendar.set(Calendar.MINUTE, 0)
-  calendar.set(Calendar.SECOND, 0)
-  calendar.set(Calendar.MILLISECOND, 0)
-
-  // ถ้าเวลานี้ผ่านไปแล้ว ให้ตั้งพรุ่งนี้
-  if (calendar.timeInMillis <= System.currentTimeMillis()) {
-    calendar.add(Calendar.DAY_OF_MONTH, 1)
-  }
-
-  return calendar.timeInMillis
 }

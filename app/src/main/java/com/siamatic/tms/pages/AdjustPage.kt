@@ -1,6 +1,5 @@
 package com.siamatic.tms.pages
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +20,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -33,17 +33,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
-import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.defaultCustomComposable
+import com.siamatic.tms.models.viewModel.home.UartViewModel
 import com.siamatic.tms.util.sharedPreferencesClass
 
 @Composable
-fun AdjustPage(paddingValues: PaddingValues, realTemp1: Float?, realTemp2: Float?) {
+fun AdjustPage(paddingValues: PaddingValues) {
   val context = LocalContext.current
   val sharedPreferences = sharedPreferencesClass(context)
+  val uartViewModel: UartViewModel = viewModel()
 
+  val realTemp1 by uartViewModel.fTemp1.collectAsState()
+  val realTemp2 by uartViewModel.fTemp2.collectAsState()
   var tempAdjust1 by remember { mutableFloatStateOf(sharedPreferences.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f) }
   var tempAdjust2 by remember { mutableFloatStateOf(sharedPreferences.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f) }
   val probes = listOf(ProbeData("Probe 1", realTemp1, tempAdjust1) { tempAdjust1 = it }, ProbeData("Probe 2", realTemp2, tempAdjust2) { tempAdjust2 = it })
