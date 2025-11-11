@@ -4,15 +4,16 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.siamatic.tms.models.viewModel.PageIndicatorViewModel
 import com.siamatic.tms.pages.HomePage
 
 // Settings route path menage
 @Composable
-fun Routes(controlRoute: NavHostController) {
+fun Routes(pageIndicatorViewModel: PageIndicatorViewModel, controlRoute: NavHostController) {
   NavHost(
       controlRoute,
-      startDestination = RoutePath.Home.route
+      startDestination = "Home"
   ) {
-    composable(RoutePath.Home.route) { HomePage(controlRoute) }
+    composable("Home") { HomePage(pageIndicatorViewModel, controlRoute) }
   }
 }
