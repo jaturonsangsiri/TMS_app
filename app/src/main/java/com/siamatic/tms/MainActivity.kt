@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
   // ถ้าผู้ใช้ไม่ Interaction กับหน้าจอเกิน 2 นาทีให้กลับไปที่หน้าหลัก
   private val handlerInteraction = Handler(Looper.getMainLooper())
   private val inactivityRunnable = Runnable {
-    Log.d(debugTag, "User inactive for 2 minutes!")
+    Log.d(debugTag, "User don't interactive for 5 minute!")
     pageIndicatorViewModel.isHomePage.value = true
   }
 
@@ -54,11 +54,12 @@ class MainActivity : ComponentActivity() {
     sharedPref.savePreference(EMAIL_PASSWORD, config?.get("EMAIL_PASSWORD"))
     sharedPref.savePreference(DEVICE_API_TOKEN, config?.get("DEVICE_API_TOKEN"))
 
+    // ไม่ใช้เต็มจอแล้ว เพราะทำให้ UI โดยทับ
     // FullScreen and hide bottom & top system bars
-    WindowCompat.setDecorFitsSystemWindows(window, false)
-    val controller = WindowInsetsControllerCompat(window, window.decorView)
-    controller.hide(WindowInsetsCompat.Type.systemBars())
-    controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    //WindowCompat.setDecorFitsSystemWindows(window, false)
+    //val controller = WindowInsetsControllerCompat(window, window.decorView)
+    //controller.hide(WindowInsetsCompat.Type.systemBars())
+    //controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
     // Keep the screen on
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -79,7 +80,7 @@ class MainActivity : ComponentActivity() {
     resetInteractionTimer()
   }
 
-  // ถ้าผู้ใช้กด เลื่อน ขยับจอจะ reset timer 2 นาที
+  // ถ้าผู้ใช้กด เลื่อน ขยับจอจะ reset timer 5 นาที
   override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
     resetInteractionTimer()
     return super.dispatchTouchEvent(ev)
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
 
   private fun resetInteractionTimer() {
     handlerInteraction.removeCallbacks(inactivityRunnable)
-    handlerInteraction.postDelayed(inactivityRunnable, 2 * 60 * 1000L)
+    handlerInteraction.postDelayed(inactivityRunnable, 5 * 60 * 1000L)
   }
 
   // ปิดปุ่มกดย้อนกลับ

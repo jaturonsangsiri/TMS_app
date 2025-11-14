@@ -121,7 +121,7 @@ class FT311UARTInterface() {
           var fTemp2: Float? = null
           var tempMinRange = 0f
           var tempMaxRange = 0f
-          var acPower: Boolean = false
+          var acPower = false
 
           while (true) {
             val packet = extractPacket(readSB) ?: break
@@ -136,7 +136,7 @@ class FT311UARTInterface() {
             Log.d(debugTag, "packet[5]: ${packet[5]}, packet[6]: ${packet[6]}, packet[8]: ${packet[8]}, packet[9]: ${packet[9]}")
             val iTemp1 = parseTemp(packet[5], packet[6])
             val iTemp2 = parseTemp(packet[8], packet[9])
-            val powerStatus = if (packet[3].toInt() == 0x00) true else false
+            val powerStatus = packet[3].toInt() == 0x00
 
             acPower = powerStatus
             if (iTemp1 != 0xFFFF) fTemp1 = calculateTemperature(sensorType, iTemp1)
