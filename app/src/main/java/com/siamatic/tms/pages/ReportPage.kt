@@ -70,7 +70,7 @@ fun ReportPage(paddingValues: PaddingValues) {
   ) {
     Card(
       modifier = Modifier
-        .fillMaxHeight(if (isTab3) 0.9f else 0.65f)
+        .fillMaxHeight(if (isTab3) 0.9f else 0.9f)
         .fillMaxWidth(if (isTab3) 0.6f else 0.6f)
         .padding(20.dp)
     ) {

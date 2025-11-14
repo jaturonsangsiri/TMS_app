@@ -37,17 +37,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
 import com.siamatic.tms.constants.P2_ADJUST_TEMP
 import com.siamatic.tms.defaultCustomComposable
-import com.siamatic.tms.models.viewModel.home.UartViewModel
 import com.siamatic.tms.util.sharedPreferencesClass
 
 @Composable
-fun AdjustPage(paddingValues: PaddingValues) {
+fun AdjustPage(paddingValues: PaddingValues, realTemp1: Float?, realTemp2: Float?) {
   val context = LocalContext.current
   val sharedPreferences = sharedPreferencesClass(context)
-  val uartViewModel: UartViewModel = viewModel()
 
-  val realTemp1 by uartViewModel.fTemp1.collectAsState()
-  val realTemp2 by uartViewModel.fTemp2.collectAsState()
   var tempAdjust1 by remember { mutableFloatStateOf(sharedPreferences.getPreference(P1_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f) }
   var tempAdjust2 by remember { mutableFloatStateOf(sharedPreferences.getPreference(P2_ADJUST_TEMP, "Float", 0f).toString().toFloatOrNull() ?: 0f) }
   val probes = listOf(ProbeData("Probe 1", realTemp1, tempAdjust1) { tempAdjust1 = it }, ProbeData("Probe 2", realTemp2, tempAdjust2) { tempAdjust2 = it })

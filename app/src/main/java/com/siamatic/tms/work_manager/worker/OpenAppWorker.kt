@@ -5,36 +5,25 @@ import android.content.Intent
 import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.siamatic.tms.MainActivity
-import com.siamatic.tms.constants.debugTag
 
-class OpenAppWorker(
-  context: Context,
-  parameters: WorkerParameters
-) : Worker(context, parameters) {
-  private val isReturnToApp: Boolean = false
+class OpenAppWorker(appContext: Context, workerParams: WorkerParameters)
+  : Worker(appContext, workerParams) {
 
   override fun doWork(): Result {
-    return try {
-      reOpenAppActivity()
-      Result.success()
+    try {
+      val launchIntent = applicationContext.packageManager
+        .getLaunchIntentForPackage(applicationContext.packageName)
+      launchIntent?.apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+      }
+      applicationContext.startActivity(launchIntent)
+      Log.d("Worker", "Reopened the app successfully.")
     } catch (e: Exception) {
-      Log.e(debugTag, "Error reopening app", e)
-      Result.failure()
+      Log.e("Worker", "Failed to open app!: ${e.message}")
+      return Result.failure()
     }
-  }
-
-  private fun reOpenAppActivity() {
-    // ใช้ applicationContext เพื่อความปลอดภัย (Worker ไม่มี Activity context)
-    val context = applicationContext
-
-    // สร้าง Intent ไปที่ MainActivity
-    val intent = Intent(context, MainActivity::class.java).apply {
-      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // จำเป็น!
-      addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-    }
-
-    // เปิด Activity ขึ้นมาใหม่
-    context.startActivity(intent)
+    return Result.success()
   }
 }

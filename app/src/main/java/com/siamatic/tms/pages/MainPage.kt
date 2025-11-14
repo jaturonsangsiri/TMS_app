@@ -73,7 +73,7 @@ import com.siamatic.tms.ui.theme.BabyBlue
 import com.siamatic.tms.util.sharedPreferencesClass
 
 @Composable
-fun MainPage(paddingValues: PaddingValues) {
+fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   var isOutOfRange1 = remember { mutableStateOf(false) } // Probe1
   var isOutOfRange2 = remember { mutableStateOf(false) } // Probe2
 
@@ -81,8 +81,6 @@ fun MainPage(paddingValues: PaddingValues) {
   val uartViewModel: UartViewModel = viewModel()
   val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
   val apiServerViewModel = ApiServerViewModel()
-  val fTemp1 by uartViewModel.fTemp1.collectAsState()
-  val fTemp2 by uartViewModel.fTemp2.collectAsState()
 
   // Check connection
   val isConnect by uartViewModel.isConnect.collectAsState()
@@ -145,14 +143,6 @@ fun MainPage(paddingValues: PaddingValues) {
   var previousTemp1 by remember { mutableStateOf<Float?>(null) } // previous temp1
   var previousTemp2 by remember { mutableStateOf<Float?>(null) } // previous temp2
 
-  // Settings alarm sound
-  var isStartedAlarm = remember { mutableStateOf(false) }
-  var mediaPlayer: MediaPlayer? = MediaPlayer.create(context, R.raw.alarm_sound).apply {
-    setOnCompletionListener {
-      isStartedAlarm.value = false
-    }
-  }
-
 //  LaunchedEffect(Unit) {
 //    withContext(Dispatchers.IO) {
 //      val offlineTemps = tempViewModel.getAllOfflineTemps()
@@ -168,20 +158,17 @@ fun MainPage(paddingValues: PaddingValues) {
     isOutOfRange1.value = defaultCustomComposable.checkRangeTemperature(fTemp1?.plus(tempAdjust1), minTemp1, maxTemp1)
     isOutOfRange2.value = defaultCustomComposable.checkRangeTemperature(fTemp2?.plus(tempAdjust2), minTemp2, maxTemp2)
 
+    // Update real temperature (temperature + adjust)
+    if (fTemp1 != null && fTemp2 != null) {
+      tempViewModel.updateTemp(fTemp1!! + tempAdjust1, fTemp2!! + tempAdjust2)
+    } else {
+      tempViewModel.updateTemp(null, null)
+    }
+
     if ((roundedTemp1 != null || roundedTemp2 != null) && (roundedTemp1 != previousTemp1 || roundedTemp2 != previousTemp2)) {
       // อัปเดต previous
       previousTemp1 = roundedTemp1
       previousTemp2 = roundedTemp2
-
-      // Check if user mute alarm
-      if (isMute.value != "true") {
-        if (isOutOfRange1.value || isOutOfRange2.value) {
-          if (!isStartedAlarm.value) {
-            isStartedAlarm.value = true
-            mediaPlayer?.start()
-          }
-        }
-      }
     }
   }
 
@@ -286,8 +273,7 @@ fun MainPage(paddingValues: PaddingValues) {
             sharedPref.savePreference(IS_MUTE, "true")
             Toast.makeText(context, "Mute Alarm Success", Toast.LENGTH_SHORT).show()
 
-            mediaPlayer?.stop()
-            isStartedAlarm.value = false
+            tempViewModel.isStartedAlarm.value = false
           }
         },
         imageVector = null,

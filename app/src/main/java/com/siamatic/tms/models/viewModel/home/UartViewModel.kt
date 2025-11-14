@@ -67,7 +67,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
         try {
           if (uartInterface != null) {
             uartInterface?.sendData(commandLength, writeBuffer)
-            Thread.sleep(3000)
+            Thread.sleep(3100)
 
             val status = uartInterface!!.ReadData(4096, readBuffer, actualNumBytes)
             if (status && actualNumBytes[0] > 0) {
@@ -85,10 +85,11 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
               // Update the connect icon in MainPage
               _isConnect.value = false
 
+              uartInterface?.sendData(resetCommandLength, resetBuffer)
               resetHardware()
             }
 
-            Thread.sleep(2000)
+            Thread.sleep(2100)
           }
         } catch (e: Exception) {
           Log.e(debugTag, "UART error: ${e.message}")

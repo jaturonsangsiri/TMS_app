@@ -2,13 +2,17 @@ package com.siamatic.tms.models.viewModel.home
 
 import android.app.Application
 import android.content.Context
+import android.media.MediaPlayer
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import com.siamatic.tms.R
 import com.siamatic.tms.constants.DEVICE_ID
 import com.siamatic.tms.constants.IS_MESSAGE_REPEAT
+import com.siamatic.tms.constants.IS_MUTE
 import com.siamatic.tms.constants.IS_SEND_MESSAGE
 import com.siamatic.tms.constants.MESSAGE_REPEAT
 import com.siamatic.tms.constants.P1_ADJUST_TEMP
@@ -85,6 +89,17 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   var repeatInterval = repetiMin * 60 * 1000L
   var interval = minOptionsLng[prePref.getPreference(RECORD_INTERVAL, "String", "5 minute")] ?: 300000L
 
+  // Ismute button state
+  var isMute = prePref.getPreference(IS_MUTE, "String", "false")
+  // Alarm mute
+  var isStartedAlarm = mutableStateOf(prePref.getPreference(IS_MUTE, "String", "false") == "true")
+  // Alarm setting sound
+  var mediaPlayer: MediaPlayer? = MediaPlayer.create(application, R.raw.alarm_sound).apply {
+    setOnCompletionListener {
+      isStartedAlarm.value = false
+    }
+  }
+
   init {
     startTempTimer()
     startCheckTemp()
@@ -151,11 +166,33 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           val roundedTemp2 = _latestTemp.value.second?.let { "%.2f".format(it).toFloat() }
           val isOutOfRange1 = defaultCustomComposable.checkRangeTemperature(roundedTemp1, minTemp1, maxTemp1)
           val isOutOfRange2 = defaultCustomComposable.checkRangeTemperature(roundedTemp2, minTemp2, maxTemp2)
+          isMute = prePref.getPreference(IS_MUTE, "String", "false")
 
           //Log.i(debugTag, "$roundedTemp1 < $minTemp1 = ${roundedTemp1 ?: 0f < minTemp1}, $roundedTemp1 > $maxTemp1 = ${roundedTemp1 ?: 0f > maxTemp1}")
           //Log.i(debugTag, "$roundedTemp2 < $minTemp2 = ${roundedTemp2 ?: 0f < minTemp2}, $roundedTemp2 > $maxTemp2 = ${roundedTemp2 ?: 0f > maxTemp2}")
 
           //Log.i(debugTag, "isOutOfRange1: $isOutOfRange1, wasOutOfRange1: $wasOutOfRange1")
+
+          // Alarm sound check & play
+          if (isMute == "false") {
+            if ((roundedTemp1 != null || roundedTemp2 != null) && (roundedTemp1 != _latestTemp.value.first || roundedTemp2 != _latestTemp.value.second)) {
+              if (isOutOfRange1 || isOutOfRange2) {
+                if (!isStartedAlarm.value) {
+                  isStartedAlarm.value = true
+                  mediaPlayer?.start()
+                }
+              }
+            }
+          } else {
+            if ((roundedTemp1 != null || roundedTemp2 != null) && (roundedTemp1 != _latestTemp.value.first || roundedTemp2 != _latestTemp.value.second)) {
+              if (!isOutOfRange1 || !isOutOfRange2) {
+                if (isStartedAlarm.value) {
+                  isStartedAlarm.value = false
+                  mediaPlayer?.stop()
+                }
+              }
+            }
+          }
 
           // MQTT sending and received command!
           if (mqttHandler != null) {

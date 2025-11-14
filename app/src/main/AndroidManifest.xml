@@ -21,6 +21,7 @@
     <uses-permission android:name="android.permission.GET_TASKS"/>
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -40,8 +41,20 @@
 
         <service android:name=".services.boot_service.BootStartService" android:enabled="true" android:exported="false"/>
 
+
+        <service
+            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            tools:ignore="Instantiatable" />
+
+        <receiver
+            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
+            android:process=":worker_process"
+            tools:ignore="Innerclass" />
+
         <activity
             android:name=".MainActivity"
+            android:noHistory="true"
             android:lockTaskMode="always"
             android:screenOrientation="landscape"
             android:exported="true"

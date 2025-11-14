@@ -2,6 +2,8 @@ package com.siamatic.tms.pages
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,15 +37,20 @@ fun ExitPage(paddingValues: PaddingValues) {
     val activity = context as? Activity
 
     Button(modifier = Modifier.width(300.dp).height(70.dp), onClick = {
-        activity?.stopLockTask() // Exit Lock Task Mode
-        activity?.finishAffinity() // Close the Activity
+      // ตั้ง Worker ให้เริ่มเร็ว (หน่วง 2 วินาทีพอ)
+      val workRequest = OneTimeWorkRequestBuilder<OpenAppWorker>()
+        .setInitialDelay(2, TimeUnit.SECONDS)
+        .addTag("reopenApp")
+        .build()
 
-        val workRequest = OneTimeWorkRequestBuilder<OpenAppWorker>()
-          .setInitialDelay(2, TimeUnit.MINUTES) // หน่วงเวลา 2 นาที
-          .build()
+      WorkManager.getInstance(context).enqueue(workRequest)
 
-        WorkManager.getInstance(context.applicationContext)
-          .enqueue(workRequest)
+      // รอเล็กน้อยให้ WorkManager enqueue เสร็จ
+      Handler(Looper.getMainLooper()).postDelayed({
+        activity?.finishAffinity()
+        android.os.Process.killProcess(android.os.Process.myPid())
+        exitProcess(0)
+      }, 1000) // 1 วินาทีหลังจาก enqueue
       }, shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.White)) {
       Text("Click here to Exit App", fontSize = 21.sp, fontWeight = FontWeight.W600, color = Color.Blue.copy(alpha = 0.7f))
     }

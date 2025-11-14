@@ -51,7 +51,7 @@ fun MessagePage(paddingValues: PaddingValues) {
   val isImmediately = remember { mutableStateOf(sharedPref.getPreference(IS_SEND_MESSAGE, "Boolean", true) == true) }
   val immmediaMin = remember { mutableIntStateOf(sharedPref.getPreference(SEND_MESSAGE, "Int", 5).toString().toInt()) }
   val isOnetime = remember { mutableStateOf(sharedPref.getPreference(IS_MESSAGE_REPEAT, "Boolean", false) == true) }
-  val repetiMin = remember { mutableIntStateOf(sharedPref.getPreference(MESSAGE_REPEAT, "Int", 10).toString().toInt()) }
+  val repetiMin = remember { mutableIntStateOf(sharedPref.getPreference(MESSAGE_REPEAT, "Int", 5).toString().toInt()) }
   val isNormal = remember { mutableStateOf(sharedPref.getPreference(RETURN_TO_NORMAL, "Boolean", true) == true) }
 
   // ******  For responsive ui *******
@@ -78,7 +78,7 @@ fun MessagePage(paddingValues: PaddingValues) {
         Column(modifier = Modifier.fillMaxSize().padding(14.dp)) {
           ContentRadioBox("2.Repetition of message.", isTab3, isOnetime.value, "One time", "Every", { isOnetime.value = true }, { isOnetime.value = false })
           Row(modifier = Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            defaultCustomComposable.BuildAddMinusControl(!isOnetime.value, { if (repetiMin.intValue != 10) { repetiMin.intValue -= 1 } }, !isOnetime.value, { repetiMin.intValue += 1 }, repetiMin.intValue.toString())
+            defaultCustomComposable.BuildAddMinusControl(!isOnetime.value, { if (repetiMin.intValue != 5) { repetiMin.intValue -= 1 } }, !isOnetime.value, { repetiMin.intValue += 1 }, repetiMin.intValue.toString())
             Spacer(modifier = Modifier.width(4.dp))
             Text(text = "min. warning", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
           }
@@ -95,7 +95,7 @@ fun MessagePage(paddingValues: PaddingValues) {
     Spacer(modifier = Modifier.height(20.dp))
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
       Button(onClick = {
-        if (immmediaMin.intValue >= 5 && repetiMin.intValue >= 10) {
+        if (immmediaMin.intValue >= 5 && repetiMin.intValue >= 5) {
           // Save message sending settings data
 //          Log.d(debugTag, "Is send message: ${isImmediately.value}")
 //          Log.d(debugTag, "send message minute: ${immmediaMin.intValue}")
@@ -111,8 +111,8 @@ fun MessagePage(paddingValues: PaddingValues) {
           Toast.makeText(context, "Saved message settings", Toast.LENGTH_SHORT).show()
         } else if (immmediaMin.intValue < 5) {
           Toast.makeText(context, "Immediately minute is less or equal 5!", Toast.LENGTH_SHORT).show()
-        } else if (repetiMin.intValue < 10) {
-          Toast.makeText(context, "Repeat minute is less or equal 10!", Toast.LENGTH_SHORT).show()
+        } else if (repetiMin.intValue < 5) {
+          Toast.makeText(context, "Repeat minute is less or equal 5!", Toast.LENGTH_SHORT).show()
         } else {
           Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
         }
