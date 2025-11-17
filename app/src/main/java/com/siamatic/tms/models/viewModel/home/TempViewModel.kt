@@ -27,14 +27,13 @@ import com.siamatic.tms.constants.TEMP_MIN_P1
 import com.siamatic.tms.constants.TEMP_MIN_P2
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.constants.minOptionsLng
-import com.siamatic.tms.constants.plugInDoorClose
-import com.siamatic.tms.constants.plugOutDoorClose
 import com.siamatic.tms.database.DatabaseProvider
 import com.siamatic.tms.database.OfflineTemp
 import com.siamatic.tms.database.Temp
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.viewModel.ApiServerViewModel
 import com.siamatic.tms.models.viewModel.GoogleSheetViewModel
+import com.siamatic.tms.services.HardwareStatusValueState
 import com.siamatic.tms.services.MqttHandler
 import com.siamatic.tms.services.api_Service.api_server.MessagePattern
 import com.siamatic.tms.util.checkForInternet
@@ -55,11 +54,12 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   private val prePref = sharedPreferencesClass(application)
   private val googleViewModel = GoogleSheetViewModel()
   private val apiServerViewModel = ApiServerViewModel()
-  private val uartViewModel = UartViewModel(application)
   private val mesaagePettern = MessagePattern()
 
   // AC Power checking
-  val acPower = uartViewModel.acPower
+  val acPower = HardwareStatusValueState.acPower
+  // uart connection
+  val isConnect = HardwareStatusValueState.isConnect
 
   private val tempDao = DatabaseProvider.getDatabase(application).tempDao()
   private val offlineTempDao = DatabaseProvider.getDatabase(application).offlineTempDao()
@@ -175,7 +175,8 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           val isOutOfRange1 = defaultCustomComposable.checkRangeTemperature(roundedTemp1, minTemp1, maxTemp1)
           val isOutOfRange2 = defaultCustomComposable.checkRangeTemperature(roundedTemp2, minTemp2, maxTemp2)
           isMute = prePref.getPreference(IS_MUTE, "String", "false")
-          val statusMessage = if (acPower.value == true) plugInDoorClose else plugOutDoorClose
+          Log.d("ACPower", "ACPower: ${acPower.value}")
+          val statusMessage = if (acPower.value && isConnect.value) "00000010" else "00000011"
 
           //Log.i(debugTag, "$roundedTemp1 < $minTemp1 = ${roundedTemp1 ?: 0f < minTemp1}, $roundedTemp1 > $maxTemp1 = ${roundedTemp1 ?: 0f > maxTemp1}")
           //Log.i(debugTag, "$roundedTemp2 < $minTemp2 = ${roundedTemp2 ?: 0f < minTemp2}, $roundedTemp2 > $maxTemp2 = ${roundedTemp2 ?: 0f > maxTemp2}")
@@ -349,8 +350,8 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           if (!offlineTemps.isNullOrEmpty() && isOnline) {
             for (offlineTemp in offlineTemps) {
               if (offlineTemp.temp1 != null && offlineTemp.temp2 != null) {
-                val addedP1 = addData(sheetId, serialNumber, probeName1, offlineTemp.temp1, offlineTemp.temp1 - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time, "$serialNumber(1)")
-                val addedP2 = addData(sheetId, serialNumber, probeName2, offlineTemp.temp2, offlineTemp.temp2 - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time, "$serialNumber(2)")
+                val addedP1 = addData(sheetId, serialNumber, offlineTemp.temp1, offlineTemp.temp1 - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time, "(1)")
+                val addedP2 = addData(sheetId, serialNumber, offlineTemp.temp2, offlineTemp.temp2 - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time, "(2)")
 
                 // If successfully uploaded, log it
                 if (addedP1 && addedP2) {
@@ -368,8 +369,8 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           // if can connect internet
           if ((roundedTemp1 != null || roundedTemp2 != null) && isOnline) {
             insertTemp(roundedTemp1, roundedTemp2)
-            addData(sheetId, serialNumber, probeName1, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time, "$serialNumber(1)")
-            addData(sheetId, serialNumber, probeName2, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time, "$serialNumber(2)")
+            addData(sheetId, serialNumber, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time, "(1)")
+            addData(sheetId, serialNumber, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time, "(2)")
             Log.i(debugTag, "New temp recorded at ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}: fTemp1=$roundedTemp1, fTemp2=$roundedTemp2")
           } else if ((roundedTemp1 != null || roundedTemp2 != null) && !isOnline) {
             insertTemp(roundedTemp1 ?: 0f, roundedTemp2 ?: 0f)
@@ -384,13 +385,13 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     )
   }
 
-  private fun addData(sheetId: String, serialNumber: String, probeName: String, temp: Float, realTemp: Float, minTemp: Float, maxTemp: Float, adjTemp: Float, ipAddress: String, date: String, time: String, type: String): Boolean {
+  private fun addData(sheetId: String, serialNumber: String, temp: Float, realTemp: Float, minTemp: Float, maxTemp: Float, adjTemp: Float, ipAddress: String, date: String, time: String, type: String): Boolean {
     var success = false
-    val statusMessage = if (acPower.value == true) plugInDoorClose else plugOutDoorClose
+    val statusMessage = if (acPower.value && isConnect.value) "00000010" else "00000011"
     viewModelScope.launch(Dispatchers.IO) {
       // status = สภานะตู้ ซึ่งใน TMS ยังไม่มีเซ็นเซอร์ประตู
       val addedAPI = async { apiServerViewModel.addTemp(title = "Add temp to server", mcuId = "$serialNumber$type", status = statusMessage, tempValue = temp, realValue = realTemp, date = date, time = time) }
-      val addedGS = async { googleViewModel.addTemperatureToGoogleSheet("add temp to google sheet", sheetId = sheetId, serialNumber = serialNumber, probe = probeName, temp = temp, acStatus = if (defaultCustomComposable.checkRangeTemperature(temp, minTemp, maxTemp)) "Warring Temp is out of range" else "Normal Temp", machineIP = ipAddress, minTemp = minTemp, maxTemp = maxTemp, adjTemp = adjTemp, dateTime = "$date $time") }
+      val addedGS = async { googleViewModel.addTemperatureToGoogleSheet("add temp to google sheet", sheetId = sheetId, serialNumber = serialNumber, probe = if (type == "(1)") "Probe 1" else "Probe 2", temp = temp, acStatus = if (defaultCustomComposable.checkRangeTemperature(temp, minTemp, maxTemp)) "Warring Temp is out of range" else "Normal Temp", machineIP = ipAddress, minTemp = minTemp, maxTemp = maxTemp, adjTemp = adjTemp, dateTime = "$date $time") }
       if (addedAPI.await() == true && addedGS.await() == true) {
         success = true
       }

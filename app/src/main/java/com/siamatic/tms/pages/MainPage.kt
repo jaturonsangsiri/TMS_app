@@ -1,19 +1,12 @@
 package com.siamatic.tms.pages
 
-import android.app.AlarmManager
 import android.app.Application
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Typeface
-import android.media.MediaPlayer
 import android.net.ConnectivityManager
 import android.util.Log
-import android.view.Gravity
-import android.view.View
-import android.widget.TextClock
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -21,15 +14,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -48,10 +36,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.siamatic.tms.R
+import com.siamatic.tms.composables.home.ClockBox
 import com.siamatic.tms.composables.home.ProbeBox
 import com.siamatic.tms.constants.DEVICE_NAME1
 import com.siamatic.tms.constants.DEVICE_NAME2
@@ -67,7 +55,7 @@ import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.models.Probe
 import com.siamatic.tms.models.viewModel.ApiServerViewModel
 import com.siamatic.tms.models.viewModel.home.TempViewModel
-import com.siamatic.tms.models.viewModel.home.UartViewModel
+import com.siamatic.tms.services.HardwareStatusValueState
 import com.siamatic.tms.services.ReportTimer
 import com.siamatic.tms.ui.theme.BabyBlue
 import com.siamatic.tms.util.sharedPreferencesClass
@@ -78,14 +66,13 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   var isOutOfRange2 = remember { mutableStateOf(false) } // Probe2
 
   val context = LocalContext.current
-  val uartViewModel: UartViewModel = viewModel()
   val tempViewModel: TempViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory(context.applicationContext as Application))
   val apiServerViewModel = ApiServerViewModel()
 
   // Check connection
-  val isConnect by uartViewModel.isConnect.collectAsState()
+  val isConnect by HardwareStatusValueState.isConnect.collectAsState()
   // AC Power checking
-  val acPower by uartViewModel.acPower.collectAsState()
+  val acPower by HardwareStatusValueState.acPower.collectAsState()
 
   // Painter resource for wifi icon.
   var wifiIcon by remember { mutableIntStateOf(R.drawable.no_wifi) }  // WIFI not connect
@@ -185,8 +172,8 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
   LaunchedEffect(Unit) {
     for(index in 1..6) {
       val isReport = sharedPref.getPreference("IS_REPORT$index", "Boolean", false) == true
-      val reportTime = sharedPref.getPreference("REPORT${index}_TIME", "Int", 0).toString().toInt()
-      if (isReport) {
+      val reportTime = sharedPref.getPreference("REPORT${index}_TIME", "String", "").toString().split(":").getOrNull(0)?.toIntOrNull()
+      if (isReport && reportTime != null) {
         reportTimers[index - 1].startDairy(reportTime, 0, tempViewModel, apiServerViewModel)
         Log.i(debugTag, "Set notification report$index time: ${reportTime.toString().format("%.2f", "0")}:00")
       }
@@ -212,12 +199,12 @@ fun MainPage(paddingValues: PaddingValues, fTemp1: Float?, fTemp2: Float?) {
         Image(modifier = Modifier
           .size(90.dp)
           .padding(start = 10.dp), painter = painterResource(
-          if (isConnect == true) R.drawable.green_led // SerialPort connected
+          if (isConnect) R.drawable.green_led // SerialPort connected
           else R.drawable.red_led // SerialPort not connect
         ), contentDescription = "")
         // AC icon status
         Image(modifier = Modifier.size(90.dp).padding(start = 10.dp), painter = painterResource(
-          if (acPower == true) R.drawable.plug_in
+          if (acPower) R.drawable.plug_in
           else R.drawable.unplug
         ), contentDescription = "")
         // WIFI Status

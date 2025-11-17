@@ -1,5 +1,6 @@
 package com.siamatic.tms.pages
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -48,12 +49,12 @@ fun ReportPage(paddingValues: PaddingValues) {
   val sharePref = sharedPreferencesClass(appContext)
   val reportSettings = remember {
     mutableStateListOf(
-      ReportSetting("Send report 1", mutableStateOf(sharePref.getPreference("IS_REPORT1", "Boolean", true) == true), mutableIntStateOf(sharePref.getPreference("REPORT1_TIME", "Int", 0).toString().toInt())),
-      ReportSetting("Send report 2", mutableStateOf(sharePref.getPreference("IS_REPORT2", "Boolean", false) == true), mutableIntStateOf(sharePref.getPreference("REPORT2_TIME", "Int", 4).toString().toInt())),
-      ReportSetting("Send report 3", mutableStateOf(sharePref.getPreference("IS_REPORT3", "Boolean", false) == true), mutableIntStateOf(sharePref.getPreference("REPORT3_TIME", "Int", 8).toString().toInt())),
-      ReportSetting("Send report 4", mutableStateOf(sharePref.getPreference("IS_REPORT4", "Boolean", false) == true), mutableIntStateOf(sharePref.getPreference("REPORT4_TIME", "Int", 12).toString().toInt())),
-      ReportSetting("Send report 5", mutableStateOf(sharePref.getPreference("IS_REPORT5", "Boolean", false) == true), mutableIntStateOf(sharePref.getPreference("REPORT5_TIME", "Int", 16).toString().toInt())),
-      ReportSetting("Send report 6", mutableStateOf(sharePref.getPreference("IS_REPORT6", "Boolean", false) == true), mutableIntStateOf(sharePref.getPreference("REPORT6_TIME", "Int", 20).toString().toInt()))
+      ReportSetting("Send report 1", mutableStateOf(sharePref.getPreference("IS_REPORT1", "Boolean", true) == true), mutableStateOf(sharePref.getPreference("REPORT1_TIME", "String", "00:00").toString())),
+      ReportSetting("Send report 2", mutableStateOf(sharePref.getPreference("IS_REPORT2", "Boolean", false) == true), mutableStateOf(sharePref.getPreference("REPORT2_TIME", "String", "04:00").toString())),
+      ReportSetting("Send report 3", mutableStateOf(sharePref.getPreference("IS_REPORT3", "Boolean", false) == true), mutableStateOf(sharePref.getPreference("REPORT3_TIME", "String", "08:00").toString())),
+      ReportSetting("Send report 4", mutableStateOf(sharePref.getPreference("IS_REPORT4", "Boolean", false) == true), mutableStateOf(sharePref.getPreference("REPORT4_TIME", "String", "12:00").toString())),
+      ReportSetting("Send report 5", mutableStateOf(sharePref.getPreference("IS_REPORT5", "Boolean", false) == true), mutableStateOf(sharePref.getPreference("REPORT5_TIME", "String", "16:00").toString())),
+      ReportSetting("Send report 6", mutableStateOf(sharePref.getPreference("IS_REPORT6", "Boolean", false) == true), mutableStateOf(sharePref.getPreference("REPORT6_TIME", "String", "20:00").toString()))
     )
   }
 
@@ -70,7 +71,7 @@ fun ReportPage(paddingValues: PaddingValues) {
   ) {
     Card(
       modifier = Modifier
-        .fillMaxHeight(if (isTab3) 0.9f else 0.9f)
+        .fillMaxHeight(if (isTab3) 0.9f else 1f)
         .fillMaxWidth(if (isTab3) 0.6f else 0.6f)
         .padding(20.dp)
     ) {
@@ -89,13 +90,13 @@ fun ReportPage(paddingValues: PaddingValues) {
         )
 
         // ✅ ใช้ forEachIndexed ปลอดภัยกว่า
-        reportSettings.forEach { report ->
+        reportSettings.forEachIndexed { inddex, report ->
           Row(modifier = Modifier.fillMaxWidth().padding(0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            switchReport(report)
+            switchReport(report, inddex, reportSettings, appContext)
             Text(report.title, fontSize = if (isTab3) 15.sp else 17.sp, modifier = Modifier.weight(1f))
 
             Button(onClick = { selectedReport = report }, enabled = report.isSelect.value, colors = ButtonDefaults.buttonColors(containerColor = if (report.isSelect.value) BabyBlue else Color.LightGray)) {
-              Text("${report.time.value.toString().padStart(2, '0')}:00")
+              Text( if (report.isSelect.value) report.time.value.toString() else "__ : __")
             }
           }
         }
@@ -106,7 +107,7 @@ fun ReportPage(paddingValues: PaddingValues) {
             // ดึงเฉพาะรายการที่เปิดอยู่
             val enabledReports = reportSettings.filter { it.isSelect.value }
             // ดึงเฉพาะเวลาที่เปิดอยู่
-            val times = enabledReports.map { it.time.value }
+            val times = enabledReports.map { it.time.value.split(":").getOrNull(0)?.toIntOrNull() ?: 0 }
             // ตรวจสอบเวลาซ้ำ
             val hasDuplicate = times.size != times.toSet().size
             // ตรวจสอบเรียงลำดับ (เวลาเรียงจากน้อยไปมาก)
@@ -137,9 +138,14 @@ fun ReportPage(paddingValues: PaddingValues) {
   // ✅ แสดง dialog ตรงนี้แทน
   selectedReport?.let { report ->
     HourSelectDialog(
-      initialHour = report.time.value,
+      initialHour = report.time.value.split(":").getOrNull(0)?.toIntOrNull() ?: 0,
       onConfirm = { selectedHour ->
-        report.time.value = selectedHour
+        if (selectedHour > 9) {
+          report.time.value = "$selectedHour:00"
+        } else {
+          report.time.value = "0$selectedHour:00"
+        }
+
         selectedReport = null
       },
       onDismiss = { selectedReport = null }
@@ -148,7 +154,7 @@ fun ReportPage(paddingValues: PaddingValues) {
 }
 
 @Composable
-fun switchReport(report: ReportSetting) {
+fun switchReport(report: ReportSetting, index: Int, reportSettings: List<ReportSetting>, context: Context) {
   Switch(
     colors = SwitchDefaults.colors(
       checkedThumbColor = Color.White,
@@ -157,7 +163,23 @@ fun switchReport(report: ReportSetting) {
       uncheckedTrackColor = Color.LightGray,
     ),
     checked = report.isSelect.value,
-    onCheckedChange = { report.isSelect.value = it }
+    onCheckedChange = { isChecked ->
+      // 🔒 ถ้าจะเปิด ต้องเช็คว่ารายการก่อนหน้าเปิดหมดแล้ว
+      if (isChecked) {
+        if (index > 0 && !reportSettings[index - 1].isSelect.value) {
+          // ป้องกันเปิดข้ามลำดับ
+          defaultCustomComposable.showToast(context, "Please open the previous item first")
+          return@Switch
+        }
+        report.isSelect.value = true
+      } else {
+        // ❌ ถ้าปิด ต้องปิดรายการหลังจากนี้ทั้งหมด
+        report.isSelect.value = false
+        for (i in index + 1 until reportSettings.size) {
+          reportSettings[i].isSelect.value = false
+        }
+      }
+    }
   )
 }
 
@@ -193,4 +215,4 @@ fun HourSelectDialog(initialHour: Int, onConfirm: (Int) -> Unit, onDismiss: () -
   }
 }
 
-data class ReportSetting(val title: String, var isSelect: MutableState<Boolean> = mutableStateOf(false), var time: MutableState<Int>)
+data class ReportSetting(val title: String, var isSelect: MutableState<Boolean> = mutableStateOf(false), var time: MutableState<String>)

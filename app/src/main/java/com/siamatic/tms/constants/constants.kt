@@ -49,10 +49,10 @@ const val DEVICE_API_TOKEN = "DEVICE_API_TOKEN"
 const val SHEET_ID = "SHEET_ID"
 
 
-const val plugInDoorClose: String = "00000000"    // สถานะไฟเข้า ประตูปิด
-const val plugOutDoorClose: String = "00000001"    // สถานะไม่มีไฟเข้า ประตูปิด
-const val plugInDoorOpen: String = "00000010"     // สถานะไฟเข้า ประตูเปิด
-const val plugOutDoorOpen: String = "00000011"   // สถานะไม่มีไฟเข้า ประตูเปิด
+const val plugInDoorOpen: String = "00000000"    // สถานะไฟเข้า ประตูเปิด
+const val plugOutDoorOpen: String = "00000001"    // สถานะไม่มีไฟเข้า ประตูเปิด
+const val plugInDoorClose: String = "00000010"     // สถานะไฟเข้า ประตูปิด
+const val plugOutDoorClose: String = "00000011"   // สถานะไม่มีไฟเข้า ประตูปิด
 
 /*** For Styling ***/
 val outerBoxPadding = 15.dp

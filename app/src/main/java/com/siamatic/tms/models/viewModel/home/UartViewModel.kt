@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.siamatic.tms.constants.debugTag
+import com.siamatic.tms.services.HardwareStatusValueState
 import com.siamatic.tms.util.FT311UARTInterface
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,25 +26,14 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
   private val _fTemp1 = MutableStateFlow<Float?>(null)
   val fTemp1 = _fTemp1.asStateFlow()
 
-  private val _acPower = MutableStateFlow<Boolean?>(null)
+  val _acPower = MutableStateFlow<Boolean?>(null)
   val acPower = _acPower.asStateFlow()
 
   private val _fTemp2 = MutableStateFlow<Float?>(null)
   val fTemp2 = _fTemp2.asStateFlow()
 
-  private var previousFTemp1 = MutableStateFlow<Float?>(null) // previous temp1
-  private var previousFTemp2 = MutableStateFlow<Float?>(null) // previous temp2
-
-  private val _tempMinRange = MutableStateFlow(0f)
-  val tempMinRange = _tempMinRange.asStateFlow()
-
-  private val _tempMaxRange = MutableStateFlow(0f)
-  val tempMaxRange = _tempMaxRange.asStateFlow()
   private var isInit = false
-
   private var countTempError: Int = 0
-  private val _isConnect = MutableStateFlow<Boolean?>(null)
-  val isConnect = _isConnect.asStateFlow()
 
   fun initUart(context: Context) {
     // Call UART init only one time
@@ -71,7 +61,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
 
             val status = uartInterface!!.ReadData(4096, readBuffer, actualNumBytes)
             if (status && actualNumBytes[0] > 0) {
-              _isConnect.value = true
+              HardwareStatusValueState.isConnect.value = true
               processData()
             } else {
               countTempError++
@@ -83,7 +73,7 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
               _fTemp1.value = null
               _fTemp2.value = null
               // Update the connect icon in MainPage
-              _isConnect.value = false
+              HardwareStatusValueState.isConnect.value = false
 
               uartInterface?.sendData(resetCommandLength, resetBuffer)
               resetHardware()
@@ -124,9 +114,8 @@ class UartViewModel(application: Application) : AndroidViewModel(application) {
       if (temp1 != prevTemp1) _fTemp1.value = temp1
       if (temp2 != prevTemp2) _fTemp2.value = temp2
 
-      _tempMaxRange.value = maxRange
-      _tempMinRange.value = minRange
       _acPower.value = acPower
+      HardwareStatusValueState.acPower.value = acPower
 
       // Debug log เฉพาะตอนค่าเปลี่ยน
       //if (temp1 != prevTemp1) Log.d(debugTag, "Temp probe1: ${String.format("%.2f", temp1)}°C")
