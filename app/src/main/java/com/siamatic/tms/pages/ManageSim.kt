@@ -134,6 +134,17 @@ fun makePhoneCall(context: Context, tel: String) {
   Log.d(debugTag, tel)
   val activity = context as? Activity ?: return
 
+  if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.CALL_PHONE)
+    != PackageManager.PERMISSION_GRANTED
+  ) {
+    ActivityCompat.requestPermissions(
+      activity,
+      arrayOf(Manifest.permission.CALL_PHONE),
+      1001
+    )
+    return
+  }
+
   val intent = Intent(Intent.ACTION_CALL)
   intent.data = Uri.parse("tel:${tel.replace("#", Uri.encode("#"))}")
   activity.startActivity(intent)

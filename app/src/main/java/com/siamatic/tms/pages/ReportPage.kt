@@ -41,6 +41,7 @@ import com.siamatic.tms.R
 import com.siamatic.tms.constants.debugTag
 import com.siamatic.tms.defaultCustomComposable
 import com.siamatic.tms.ui.theme.BabyBlue
+import com.siamatic.tms.util.TimeSelectDialog
 import com.siamatic.tms.util.sharedPreferencesClass
 
 @Composable
@@ -106,26 +107,44 @@ fun ReportPage(paddingValues: PaddingValues) {
           defaultCustomComposable.BuildButton("Save", isTab3, Color(0xFF3CB371)) {
             // ดึงเฉพาะรายการที่เปิดอยู่
             val enabledReports = reportSettings.filter { it.isSelect.value }
-            // ดึงเฉพาะเวลาที่เปิดอยู่
-            val times = enabledReports.map { it.time.value.split(":").getOrNull(0)?.toIntOrNull() ?: 0 }
-            // ตรวจสอบเวลาซ้ำ
-            val hasDuplicate = times.size != times.toSet().size
-            // ตรวจสอบเรียงลำดับ (เวลาเรียงจากน้อยไปมาก)
-            val isSorted = times.zipWithNext().all { (a, b) -> a < b }
 
-            if (hasDuplicate || !isSorted) {
-              defaultCustomComposable.showToast(appContext, "กรุณาแก้ไขข้อมูลให้ถูกต้อง")
+            // helper: แปลง "HH:mm" -> total minutes หรือ null ถ้าไม่ valid
+            fun parseToMinutes(timeStr: String): Int? {
+              val parts = timeStr.split(":")
+              if (parts.size != 2) return null
+              val h = parts[0].toIntOrNull() ?: return null
+              val m = parts[1].toIntOrNull() ?: return null
+              if (h !in 0..23 || m !in 0..59) return null
+              return h * 60 + m
+            }
+
+            // ดึง list ของ total minutes (valid)
+            val timesInMinutes = enabledReports.mapNotNull { parseToMinutes(it.time.value) }
+
+            // ถ้ามี item ที่ไม่ parse ได้ -> แจ้ง error
+            if (timesInMinutes.size != enabledReports.size) {
+              defaultCustomComposable.showToast(appContext, "เวลาไม่ถูกต้อง")
               return@BuildButton
             }
 
-            // ✅ ผ่านการตรวจสอบแล้ว ค่อยบันทึก
+            // ตรวจสอบเวลาซ้ำ (total minutes จะเป็ฯ unique key)
+            val hasDuplicate = timesInMinutes.size != timesInMinutes.toSet().size
+
+            // ตรวจสอบเรียงลำดับ (น้อย -> มาก)
+            val isSorted = timesInMinutes.zipWithNext().all { (a, b) -> a < b }
+
+            if (hasDuplicate || !isSorted) {
+              defaultCustomComposable.showToast(appContext, "กรุณาแก้ไขข้อมูลให้ถูกต้อง (ห้ามซ้ำและต้องเรียงลำดับ)")
+              return@BuildButton
+            }
+
+            // ผ่านการตรวจสอบแล้ว ค่อยบันทึก
             reportSettings.forEachIndexed { index, report ->
               sharePref.savePreference("IS_REPORT${index + 1}", report.isSelect.value)
               if (report.isSelect.value) {
                 sharePref.savePreference("REPORT${index + 1}_TIME", report.time.value)
               }
-
-              Log.i(debugTag, "${report.title} -> ${report.time.value}:00 ${report.isSelect.value}")
+              Log.i(debugTag, "saved report IS_REPORT${index + 1}, isreport: ${report.isSelect.value}, report time: ${report.time.value}")
             }
 
             defaultCustomComposable.showToast(appContext, "บันทึกสำเร็จ!")
@@ -137,15 +156,11 @@ fun ReportPage(paddingValues: PaddingValues) {
 
   // ✅ แสดง dialog ตรงนี้แทน
   selectedReport?.let { report ->
-    HourSelectDialog(
+    TimeSelectDialog(
       initialHour = report.time.value.split(":").getOrNull(0)?.toIntOrNull() ?: 0,
-      onConfirm = { selectedHour ->
-        if (selectedHour > 9) {
-          report.time.value = "$selectedHour:00"
-        } else {
-          report.time.value = "0$selectedHour:00"
-        }
-
+      initialMinute = report.time.value.split(":").getOrNull(1)?.toIntOrNull() ?: 0,
+      onConfirm = { timeString ->
+        report.time.value = timeString
         selectedReport = null
       },
       onDismiss = { selectedReport = null }
@@ -181,38 +196,6 @@ fun switchReport(report: ReportSetting, index: Int, reportSettings: List<ReportS
       }
     }
   )
-}
-
-@Composable
-fun HourSelectDialog(initialHour: Int, onConfirm: (Int) -> Unit, onDismiss: () -> Unit) {
-  var hour by remember { mutableIntStateOf(initialHour) }
-
-  Dialog(onDismissRequest = { onDismiss() }) {
-    Surface(shape = RoundedCornerShape(16.dp), tonalElevation = 6.dp, color = Color.White) {
-      Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Select hour", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          defaultCustomComposable.BuildAddMinusControl(
-            true,
-            { hour = if (hour > 0) hour - 1 else 23 },
-            true,
-            { hour = if (hour < 23) hour + 1 else 0 },
-            hour.toString()
-          )
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-          Button(onClick = { onConfirm(hour) }, colors = ButtonDefaults.buttonColors(containerColor = Color.Blue.copy(alpha = 0.7f))) {
-            Text("Confirm")
-          }
-          Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.colorRed))) {
-            Text("Cancel")
-          }
-        }
-      }
-    }
-  }
 }
 
 data class ReportSetting(val title: String, var isSelect: MutableState<Boolean> = mutableStateOf(false), var time: MutableState<String>)

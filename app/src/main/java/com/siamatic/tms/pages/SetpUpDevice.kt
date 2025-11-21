@@ -22,6 +22,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -59,8 +60,8 @@ fun SetUpDevice(paddingValues: PaddingValues) {
   val context = LocalContext.current
   val sharedPref = sharedPreferencesClass(context)
   var selectedOption by remember { mutableStateOf(sharedPref.getPreference(RECORD_INTERVAL, "String", "5 minute").toString()) }
-  var probeName1 by remember { mutableStateOf(sharedPref.getPreference(DEVICE_NAME1, "String", "Probe 1").toString()) }
-  var probeName2 by remember { mutableStateOf(sharedPref.getPreference(DEVICE_NAME2, "String", "Probe 2").toString()) }
+  var probeName1 by remember { mutableStateOf("") }
+  var probeName2 by remember { mutableStateOf("") }
   var tempMaxP1 by remember { mutableFloatStateOf(sharedPref.getPreference(TEMP_MAX_P1, "Float", 22f).toString().toFloat()) }
   var tempMinP1 by remember { mutableFloatStateOf(sharedPref.getPreference(TEMP_MIN_P1, "Float", 0f).toString().toFloat()) }
   var tempMaxP2 by remember { mutableFloatStateOf(sharedPref.getPreference(TEMP_MAX_P2, "Float", 22f).toString().toFloat()) }
@@ -76,6 +77,12 @@ fun SetUpDevice(paddingValues: PaddingValues) {
 
   // ******  For responsive ui *******
   val isTab3 = defaultCustomComposable.getDeviceHeightPixels(context)
+
+
+  LaunchedEffect(Unit) {
+    probeName1 = sharedPref.getPreference(DEVICE_NAME1, "String", "Probe 1").toString()
+    probeName2 = sharedPref.getPreference(DEVICE_NAME2, "String", "Probe 2").toString()
+  }
 
   Column(modifier = Modifier.padding(paddingValues)) {
     Row(modifier = Modifier.padding(outerBoxPadding)) {
@@ -106,7 +113,7 @@ fun SetUpDevice(paddingValues: PaddingValues) {
         Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
           Text("Alarm", fontSize = 18.sp, fontWeight = FontWeight.W600, color = Color.Black.copy(alpha = 0.70f))
 
-          TextField("Probe name: ", probeName1, KeyboardType.Text, pN1focus) { newValue ->
+          TextField("Probe name1: ", probeName1, KeyboardType.Text, pN1focus) { newValue ->
             probeName1 = newValue
           }
           Spacer(modifier = Modifier.height(15.dp))
@@ -123,7 +130,7 @@ fun SetUpDevice(paddingValues: PaddingValues) {
           Spacer(modifier = Modifier.height(15.dp))
 
           TextField(
-            "Probe name: ", probeName2, KeyboardType.Text, pN2focus
+            "Probe name2: ", probeName2, KeyboardType.Text, pN2focus
           ) { newValue ->
             probeName2 = newValue
           }

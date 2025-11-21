@@ -7,6 +7,5 @@
     "MQTT_HOST": "tcp://192.168.0.111:1883",
     "MQTT_USERNAME": "admin",
     "MQTT_PASSWORD": "admin",
-    "MQTT_COMMAND_TOPIC": "test/temp",
-    "MQTT_SEND_TEMP_TOPIC": "tms/TMS-05-L04-0917-018"
+    "APP_VERSION": "3.0.1"
 }

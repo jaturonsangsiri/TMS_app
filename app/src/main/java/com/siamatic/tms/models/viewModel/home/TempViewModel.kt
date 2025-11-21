@@ -54,7 +54,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   private val prePref = sharedPreferencesClass(application)
   private val googleViewModel = GoogleSheetViewModel()
   private val apiServerViewModel = ApiServerViewModel()
-  private val mesaagePettern = MessagePattern()
+  private val messagePattern = MessagePattern()
 
   // AC Power checking
   val acPower = HardwareStatusValueState.acPower
@@ -76,7 +76,9 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   private val _allTemps = MutableStateFlow<List<Temp>>(emptyList())
   val allTemps: StateFlow<List<Temp>> = _allTemps.asStateFlow()
 
-  var serialNumber = ""; var sheetId = ""; var probeName1 = ""; var probeName2 = ""
+  var serialNumber = prePref.getPreference(DEVICE_ID, "String", "").toString()
+  var sheetId = prePref.getPreference(SHEET_ID, "String", "").toString() 
+  var probeName1 = ""; var probeName2 = ""
   var maxTemp1 = 0f; var minTemp1 = 0f; var maxTemp2 = 22f; var minTemp2 = 0f; var adjTemp1 = 0f; var adjTemp2 = 0f
 
   var mqttHandler: MqttHandler? = null
@@ -84,8 +86,6 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   private val mqttHOST = config.get("MQTT_HOST").toString()
   private val mqttUsername = config.get("MQTT_USERNAME").toString()
   private val mqttPassword = config.get("MQTT_PASSWORD").toString()
-  val mqttCommandTopic = config.get("MQTT_COMMAND_TOPIC").toString()
-  val mqttSendTempTopic = config.get("MQTT_SEND_TEMP_TOPIC").toString()
   val ipAddress = defaultCustomComposable.getDeviceIP().toString()
 
   var isImmediately = prePref.getPreference(IS_SEND_MESSAGE, "Boolean", true) == true
@@ -98,15 +98,11 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
   var interval = minOptionsLng[prePref.getPreference(RECORD_INTERVAL, "String", "5 minute")] ?: 300000L
 
   // Ismute button state
-  var isMute = prePref.getPreference(IS_MUTE, "String", "false")
-  // Alarm mute
-  var isStartedAlarm = mutableStateOf(prePref.getPreference(IS_MUTE, "String", "false") == "true")
+  private val _isMute = MutableStateFlow(prePref.getPreference(IS_MUTE, "Boolean", false) == true)
+  var isMute = _isMute.asStateFlow()
+
   // Alarm setting sound
-  var mediaPlayer: MediaPlayer? = MediaPlayer.create(application, R.raw.alarm_sound).apply {
-    setOnCompletionListener {
-      isStartedAlarm.value = false
-    }
-  }
+  var mediaPlayer: MediaPlayer? = null
 
   init {
     startTempTimer()
@@ -143,7 +139,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     }
 
     // เชื่อมต่อ subscribe Topic
-    mqttHandler!!.subscribe(mqttCommandTopic)
+    mqttHandler!!.subscribe("test/temp")
   }
 
   private fun startCheckTemp() {
@@ -174,7 +170,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           val roundedTemp2 = _latestTemp.value.second?.let { "%.2f".format(it).toFloat() }
           val isOutOfRange1 = defaultCustomComposable.checkRangeTemperature(roundedTemp1, minTemp1, maxTemp1)
           val isOutOfRange2 = defaultCustomComposable.checkRangeTemperature(roundedTemp2, minTemp2, maxTemp2)
-          isMute = prePref.getPreference(IS_MUTE, "String", "false")
+
           Log.d("ACPower", "ACPower: ${acPower.value}")
           val statusMessage = if (acPower.value && isConnect.value) "00000010" else "00000011"
 
@@ -183,25 +179,18 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
 
           //Log.i(debugTag, "isOutOfRange1: $isOutOfRange1, wasOutOfRange1: $wasOutOfRange1")
 
-          // Alarm sound check & play
-          if (isMute == "false") {
-            if ((roundedTemp1 != null || roundedTemp2 != null) && (roundedTemp1 != _latestTemp.value.first || roundedTemp2 != _latestTemp.value.second)) {
-              if (isOutOfRange1 || isOutOfRange2) {
-                if (!isStartedAlarm.value) {
-                  isStartedAlarm.value = true
-                  mediaPlayer?.start()
-                }
-              }
-            }
-          } else {
-            if ((roundedTemp1 != null || roundedTemp2 != null) && (roundedTemp1 != _latestTemp.value.first || roundedTemp2 != _latestTemp.value.second)) {
-              if (!isOutOfRange1 || !isOutOfRange2) {
-                if (isStartedAlarm.value) {
-                  isStartedAlarm.value = false
-                  mediaPlayer?.stop()
-                }
-              }
-            }
+          roundedTemp1?.let { temp -> checkingMaxMinToday(temp, "1") }
+          roundedTemp2?.let { temp -> checkingMaxMinToday(temp, "2") }
+
+          if ((isOutOfRange1 || isOutOfRange2) && !isMute.value) {
+            mediaPlayer = MediaPlayer.create(application, R.raw.alarm_sound)
+            mediaPlayer?.start()
+          }
+          if (isMute.value) {
+            mediaPlayer = null
+          }
+          if (!isOutOfRange1 && !isOutOfRange2) {
+            muteUnmute(false)
           }
 
           // MQTT sending and received command!
@@ -210,7 +199,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
             sendData.put("probe1", roundedTemp1)
             sendData.put("probe2", roundedTemp2)
 
-            mqttHandler!!.publish(mqttSendTempTopic, sendData.toString())
+            mqttHandler!!.publish("tms/$serialNumber", sendData.toString())
           } else {
             Log.e(debugTag, "MQTT can't create!, mqttHandler = null")
           }
@@ -240,12 +229,12 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
             if (isOnetime && !isDelayFirst1 && isOutOfRange1 && isSendOneTime1) {
               isSendOneTime1 = false
               Log.i(debugTag, "อุณหภูมิ probe 1 อุณหภูมิเกิน")
-              apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, mesaagePettern.messagePatternToServer("warning", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
+              apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("warning", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
             }
             if (isOnetime && !isDelayFirst2 && isOutOfRange2 && isSendOneTime2) {
               isSendOneTime2 = false
               Log.i(debugTag, "อุณหภูมิ probe 2 อุณหภูมิเกิน")
-              apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, mesaagePettern.messagePatternToServer("warning", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
+              apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("warning", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
             }
 
             // 3) ถ้าค่า isOnetime = false จะแจ้งเตือนซ้ำเรื่อยๆ
@@ -262,7 +251,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
 
                     if (isOutOfRange1) {
                       Log.i(debugTag, "อุณหภูมิ probe 1 อุณหภูมิเกิน")
-                      apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, mesaagePettern.messagePatternToServer("warning", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
+                      apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("warning", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
                     } 
                     if (!isOutOfRange1) {
                       intervalTimer1?.cancel()
@@ -285,7 +274,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
 
                     if (isOutOfRange2) {
                       Log.i(debugTag, "อุณหภูมิ probe 2 อุณหภูมิเกิน")
-                      apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, mesaagePettern.messagePatternToServer("warning", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
+                      apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("warning", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
                     } 
                     if (!isOutOfRange2) {
                       intervalTimer2?.cancel()
@@ -308,7 +297,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
               // ส่งการแจ้งเตือนหากมีการเซ็ตส่งการแจ้งเตือนเมื่ออุณหภูมิกลับสู่ช่วงปกติ isNormal
               if (isNormal) {
                 Log.i(debugTag, "ส่งการแจ้งเตือนอุณหภูมิ probe 1 กลับเข้าสู่ช่วงปกติ")
-                apiServerViewModel.notifyNotNormalTemp("Probe 1 is returned to normal", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, mesaagePettern.messagePatternToServer("normal", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
+                apiServerViewModel.notifyNotNormalTemp("Probe 1 is returned to normal", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("normal", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
               }
             }
             if (!isOutOfRange2 && wasOutOfRange2) {
@@ -321,7 +310,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
               // ส่งการแจ้งเตือนหากมีการเซ็ตส่งการแจ้งเตือนเมื่ออุณหภูมิกลับสู่ช่วงปกติ isNormal
               if (isNormal) {
                 Log.i(debugTag, "ส่งการแจ้งเตือนอุณหภูมิ probe 2 กลับเข้าสู่ช่วงปกติ")
-                apiServerViewModel.notifyNotNormalTemp("Probe 2 is returned to normal", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, mesaagePettern.messagePatternToServer("normal", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
+                apiServerViewModel.notifyNotNormalTemp("Probe 2 is returned to normal", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("normal", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
               }
             }
           }
@@ -349,9 +338,11 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           // Add offline temp to google sheet
           if (!offlineTemps.isNullOrEmpty() && isOnline) {
             for (offlineTemp in offlineTemps) {
+              Log.i("OfflineData", "sheetId: $sheetId, serialNumber: $serialNumber, temp1: ${offlineTemp.temp1}, realTemp1: ${offlineTemp.temp1.let { it?.minus(adjTemp1)}}, Date: ${offlineTemp.dateStr}, Time: ${offlineTemp.timeStr}, minTemp: $minTemp1, maxTemp: $maxTemp1, adjustTemp: $adjTemp1, ipaddress: $ipAddress")
+              Log.i("OfflineData", "sheetId: $sheetId, serialNumber: $serialNumber, temp2: ${offlineTemp.temp2}, realTemp2: ${offlineTemp.temp2.let { it?.minus(adjTemp2)}}, Date: ${offlineTemp.dateStr}, Time: ${offlineTemp.timeStr}, minTemp2: $minTemp2, maxTemp2: $maxTemp2, adjustTemp2: $adjTemp2, ipaddress: $ipAddress")
               if (offlineTemp.temp1 != null && offlineTemp.temp2 != null) {
-                val addedP1 = addData(sheetId, serialNumber, offlineTemp.temp1, offlineTemp.temp1 - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time, "(1)")
-                val addedP2 = addData(sheetId, serialNumber, offlineTemp.temp2, offlineTemp.temp2 - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time, "(2)")
+                val addedP1 = addData(offlineTemp.temp1, offlineTemp.temp1 - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, offlineTemp.dateStr, offlineTemp.timeStr, "(1)")
+                val addedP2 = addData(offlineTemp.temp2, offlineTemp.temp2 - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, offlineTemp.dateStr, offlineTemp.timeStr, "(2)")
 
                 // If successfully uploaded, log it
                 if (addedP1 && addedP2) {
@@ -369,8 +360,8 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           // if can connect internet
           if ((roundedTemp1 != null || roundedTemp2 != null) && isOnline) {
             insertTemp(roundedTemp1, roundedTemp2)
-            addData(sheetId, serialNumber, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time, "(1)")
-            addData(sheetId, serialNumber, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time, "(2)")
+            addData(roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, minTemp1, maxTemp1, adjTemp1, ipAddress, date, time, "(1)")
+            addData(roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, minTemp2, maxTemp2, adjTemp2, ipAddress, date, time, "(2)")
             Log.i(debugTag, "New temp recorded at ${defaultCustomComposable.convertLongToTime(System.currentTimeMillis())}: fTemp1=$roundedTemp1, fTemp2=$roundedTemp2")
           } else if ((roundedTemp1 != null || roundedTemp2 != null) && !isOnline) {
             insertTemp(roundedTemp1 ?: 0f, roundedTemp2 ?: 0f)
@@ -385,16 +376,20 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     )
   }
 
-  private fun addData(sheetId: String, serialNumber: String, temp: Float, realTemp: Float, minTemp: Float, maxTemp: Float, adjTemp: Float, ipAddress: String, date: String, time: String, type: String): Boolean {
+  private fun addData(temp: Float, realTemp: Float, minTemp: Float, maxTemp: Float, adjTemp: Float, ipAddress: String, date: String, time: String, type: String): Boolean {
     var success = false
+    var addedAPISuccess = false; var addedGSSuccess = false
     val statusMessage = if (acPower.value && isConnect.value) "00000010" else "00000011"
     viewModelScope.launch(Dispatchers.IO) {
       // status = สภานะตู้ ซึ่งใน TMS ยังไม่มีเซ็นเซอร์ประตู
-      val addedAPI = async { apiServerViewModel.addTemp(title = "Add temp to server", mcuId = "$serialNumber$type", status = statusMessage, tempValue = temp, realValue = realTemp, date = date, time = time) }
-      val addedGS = async { googleViewModel.addTemperatureToGoogleSheet("add temp to google sheet", sheetId = sheetId, serialNumber = serialNumber, probe = if (type == "(1)") "Probe 1" else "Probe 2", temp = temp, acStatus = if (defaultCustomComposable.checkRangeTemperature(temp, minTemp, maxTemp)) "Warring Temp is out of range" else "Normal Temp", machineIP = ipAddress, minTemp = minTemp, maxTemp = maxTemp, adjTemp = adjTemp, dateTime = "$date $time") }
-      if (addedAPI.await() == true && addedGS.await() == true) {
-        success = true
-      }
+       val addedAPI = async { apiServerViewModel.addTemp(title = "Add temp to server", mcuId = "$serialNumber$type", status = statusMessage, tempValue = temp, realValue = realTemp, date = date, time = time) }
+       val addedGS = async { googleViewModel.addTemperatureToGoogleSheet("add temp to google sheet", sheetId = sheetId, serialNumber = serialNumber, probe = if (type == "(1)") "Probe 1" else "Probe 2", temp = temp, acStatus = if (defaultCustomComposable.checkRangeTemperature(temp, minTemp, maxTemp)) "Warring Temp is out of range" else "Normal Temp", machineIP = ipAddress, minTemp = minTemp, maxTemp = maxTemp, adjTemp = adjTemp, dateTime = "$date $time") }
+      addedAPISuccess = addedAPI.await() ?: false
+      addedGSSuccess = addedGS.await() ?: false
+       if (addedAPISuccess && addedGSSuccess) {
+         Log.i("AddedDataSuccess", "addedAPI: $addedAPISuccess, addedGS: $addedGSSuccess")
+         success = true
+       }
     }
     return success
   }
@@ -417,10 +412,26 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     }
   }
 
+  // เช็คอุณหภูมิ MAX, MIN รายวัน
+  fun checkingMaxMinToday(temp: Float, n: String) {
+    val maxTemp = prePref.getPreference("MAX_TEMP_TODAY$n", "Float", -100f)?.toString()?.toFloatOrNull() ?: -100f
+    val minTemp = prePref.getPreference("MIN_TEMP_TODAY$n", "Float", 100f)?.toString()?.toFloatOrNull() ?: 100f
+    if (temp > maxTemp) {
+      prePref.savePreference("MAX_TEMP_TODAY$n", temp)
+    }
+    if (temp < minTemp) {
+      prePref.savePreference("MIN_TEMP_TODAY$n", temp)
+    }
+  }
+
+  // เซฟ mute, unmute
+  fun muteUnmute(mute: Boolean) {
+    _isMute.value = mute
+    prePref.savePreference(IS_MUTE, mute)
+  }
+
   // Get settings
   fun getSettings() {
-    serialNumber = prePref.getPreference(DEVICE_ID, "String", "").toString()
-    sheetId = prePref.getPreference(SHEET_ID, "String", "").toString()
     maxTemp1 = prePref.getPreference(TEMP_MAX_P1, "Float", 22f).toString().toFloat()
     minTemp1 = prePref.getPreference(TEMP_MIN_P1, "Float", 0f).toString().toFloat()
     maxTemp2 = prePref.getPreference(TEMP_MAX_P2, "Float", 22f).toString().toFloat()
@@ -436,7 +447,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     repeatInterval = repetiMin * 60 * 1000L
     interval = minOptionsLng[prePref.getPreference(RECORD_INTERVAL, "String", "5 minute")] ?: 300000L
     probeName1 = prePref.getPreference(DEVICE_NAME1, "String", "Probe 1").toString()
-    probeName1 = prePref.getPreference(DEVICE_NAME2, "String", "Probe 2").toString()
+    probeName2 = prePref.getPreference(DEVICE_NAME2, "String", "Probe 2").toString()
   }
 
   // Reset all records

@@ -22,18 +22,7 @@ fun checkForInternet(context: Context): Boolean {
     // Representation of the capabilities of an active network.
     val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
 
-    return when {
-      // Indicates this network uses a Wi-Fi transport,
-      // or WiFi has network connectivity
-      activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-
-      // Indicates this network uses a Cellular transport. or
-      // Cellular has network connectivity
-      activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-
-      // else return false
-      else -> false
-    }
+    return activeNetwork.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && activeNetwork.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
   } else {
     // if the android version is below M
     @Suppress("DEPRECATION") val networkInfo =

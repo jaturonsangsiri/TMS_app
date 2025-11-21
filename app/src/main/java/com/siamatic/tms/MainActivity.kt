@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
     sharedPref.savePreference(SHEET_ID, config?.get("SHEET_ID"))
     sharedPref.savePreference(EMAIL_PASSWORD, config?.get("EMAIL_PASSWORD"))
     sharedPref.savePreference(DEVICE_API_TOKEN, config?.get("DEVICE_API_TOKEN"))
+    sharedPref.savePreference("APP_VERSION", config?.get("APP_VERSION"))
 
     // ไม่ใช้เต็มจอแล้ว เพราะทำให้ UI โดยทับ
     // FullScreen and hide bottom & top system bars
