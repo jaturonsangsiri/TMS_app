@@ -149,27 +149,19 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
     var isSendOneTime2 = true
     var wasOutOfRange1 = false
     var wasOutOfRange2 = false
-
-    Log.i(debugTag, "isImmediately: $isImmediately," +
-            " immmediaMin: $immmediaMin," +
-            " isOnetime: $isOnetime," +
-            " repetiMin: $repetiMin," +
-            " isNormal: $isNormal," +
-            " delayFirst: $delayFirst," +
-            " repeatInterval: $repeatInterval")
+    Log.i(debugTag, "isImmediately: $isImmediately, immmediaMin: $immmediaMin, isOnetime: $isOnetime, repetiMin: $repetiMin, isNormal: $isNormal, delayFirst: $delayFirst, repeatInterval: $repeatInterval")
 
     checkTimer.schedule(object: TimerTask() {
-      val date = defaultCustomComposable.convertLongToDateOnly(System.currentTimeMillis())
-      val time = defaultCustomComposable.convertLongToTime(System.currentTimeMillis())
-      val isOnline = checkForInternet(application)
-
       override fun run() {
         getSettings()
         viewModelScope.launch(Dispatchers.IO) {
+          val isOnline = checkForInternet(application)
           val roundedTemp1 = _latestTemp.value.first?.let { "%.2f".format(it).toFloat() }
           val roundedTemp2 = _latestTemp.value.second?.let { "%.2f".format(it).toFloat() }
           val isOutOfRange1 = defaultCustomComposable.checkRangeTemperature(roundedTemp1, minTemp1, maxTemp1)
           val isOutOfRange2 = defaultCustomComposable.checkRangeTemperature(roundedTemp2, minTemp2, maxTemp2)
+          val date1 = defaultCustomComposable.convertLongToDateOnly(System.currentTimeMillis())
+          val time1 = defaultCustomComposable.convertLongToTime(System.currentTimeMillis())
 
           Log.d("ACPower", "ACPower: ${acPower.value}")
           val statusMessage = if (acPower.value && isConnect.value) "00000010" else "00000011"
@@ -229,12 +221,12 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
             if (isOnetime && !isDelayFirst1 && isOutOfRange1 && isSendOneTime1) {
               isSendOneTime1 = false
               Log.i(debugTag, "อุณหภูมิ probe 1 อุณหภูมิเกิน")
-              apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("warning", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
+              apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("warning", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date1, time1),  date1, time1)
             }
             if (isOnetime && !isDelayFirst2 && isOutOfRange2 && isSendOneTime2) {
               isSendOneTime2 = false
               Log.i(debugTag, "อุณหภูมิ probe 2 อุณหภูมิเกิน")
-              apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("warning", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
+              apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("warning", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date1, time1),  date1, time1)
             }
 
             // 3) ถ้าค่า isOnetime = false จะแจ้งเตือนซ้ำเรื่อยๆ
@@ -247,11 +239,13 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
                   viewModelScope.launch(Dispatchers.IO) {
                     val roundedTemp1 = _latestTemp.value.first?.let { "%.2f".format(it).toFloat() }
                     val isOutOfRange1 = defaultCustomComposable.checkRangeTemperature(roundedTemp1, minTemp1, maxTemp1)
+                    val date2 = defaultCustomComposable.convertLongToDateOnly(System.currentTimeMillis())
+                    val time2 = defaultCustomComposable.convertLongToTime(System.currentTimeMillis())
                     Log.d(debugTag, "roundedTemp1: $roundedTemp1, isOutOfRange1: $isOutOfRange1, minTemp1: $minTemp1, maxTemp1: $maxTemp1")
 
                     if (isOutOfRange1) {
                       Log.i(debugTag, "อุณหภูมิ probe 1 อุณหภูมิเกิน")
-                      apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("warning", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
+                      apiServerViewModel.notifyNotNormalTemp("Probe 1 temp is out of range", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("warning", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date2, time2),  date2, time2)
                     } 
                     if (!isOutOfRange1) {
                       intervalTimer1?.cancel()
@@ -270,11 +264,13 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
                   viewModelScope.launch(Dispatchers.IO) {
                     val roundedTemp2 = _latestTemp.value.first?.let { "%.2f".format(it).toFloat() }
                     val isOutOfRange2 = defaultCustomComposable.checkRangeTemperature(roundedTemp2, minTemp2, maxTemp2)
+                    val date3 = defaultCustomComposable.convertLongToDateOnly(System.currentTimeMillis())
+                    val time3 = defaultCustomComposable.convertLongToTime(System.currentTimeMillis())
                     Log.d(debugTag, "roundedTemp2: $roundedTemp2, isOutOfRange2: $isOutOfRange2, minTemp2: $minTemp2, maxTemp2: $maxTemp2")
 
                     if (isOutOfRange2) {
                       Log.i(debugTag, "อุณหภูมิ probe 2 อุณหภูมิเกิน")
-                      apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("warning", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
+                      apiServerViewModel.notifyNotNormalTemp("Probe 2 temp is out of range", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("warning", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date3, time3),  date3, time3)
                     } 
                     if (!isOutOfRange2) {
                       intervalTimer2?.cancel()
@@ -297,7 +293,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
               // ส่งการแจ้งเตือนหากมีการเซ็ตส่งการแจ้งเตือนเมื่ออุณหภูมิกลับสู่ช่วงปกติ isNormal
               if (isNormal) {
                 Log.i(debugTag, "ส่งการแจ้งเตือนอุณหภูมิ probe 1 กลับเข้าสู่ช่วงปกติ")
-                apiServerViewModel.notifyNotNormalTemp("Probe 1 is returned to normal", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("normal", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date, time),  date, time)
+                apiServerViewModel.notifyNotNormalTemp("Probe 1 is returned to normal", "$serialNumber(1)", statusMessage, roundedTemp1 ?: 0f, (roundedTemp1 ?: 0f) - adjTemp1, messagePattern.messagePatternToServer("normal", probeName1, minTemp1, maxTemp1, roundedTemp1 ?: 0f, date1, time1),  date1, time1)
               }
             }
             if (!isOutOfRange2 && wasOutOfRange2) {
@@ -310,7 +306,7 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
               // ส่งการแจ้งเตือนหากมีการเซ็ตส่งการแจ้งเตือนเมื่ออุณหภูมิกลับสู่ช่วงปกติ isNormal
               if (isNormal) {
                 Log.i(debugTag, "ส่งการแจ้งเตือนอุณหภูมิ probe 2 กลับเข้าสู่ช่วงปกติ")
-                apiServerViewModel.notifyNotNormalTemp("Probe 2 is returned to normal", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("normal", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date, time),  date, time)
+                apiServerViewModel.notifyNotNormalTemp("Probe 2 is returned to normal", "$serialNumber(2)", statusMessage, roundedTemp2 ?: 0f, (roundedTemp2 ?: 0f) - adjTemp2, messagePattern.messagePatternToServer("normal", probeName2, minTemp2, maxTemp2, roundedTemp2 ?: 0f, date1, time1),  date1, time1)
               }
             }
           }
@@ -332,7 +328,6 @@ class TempViewModel(application: Application): AndroidViewModel(application) {
           val date = defaultCustomComposable.convertLongToDateOnly(System.currentTimeMillis())
           val time = defaultCustomComposable.convertLongToTime(System.currentTimeMillis())
           val isOnline = checkForInternet(application)
-
           // Get offline temps
           val offlineTemps = getAllOfflineTemps()
           // Add offline temp to google sheet

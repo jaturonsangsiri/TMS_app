@@ -88,10 +88,10 @@ fun ProbeCard(probe: ProbeData, onSave: () -> Unit, modifier: Modifier = Modifie
       Row(modifier = Modifier.fillMaxWidth().padding(bottom = 15.dp), horizontalArrangement = Arrangement.Center) {
         defaultCustomComposable.BuildAddMinusControl(
           true,
-          { probe.onAdjustChange(probe.adjustTemp - 1) },
+          { probe.onAdjustChange((probe.adjustTemp - 0.1f).round2()) },
           true,
-          { probe.onAdjustChange(probe.adjustTemp + 1) },
-          probe.adjustTemp.toString()
+          { probe.onAdjustChange((probe.adjustTemp + 0.1f).round2()) },
+          String.format("%.2f", probe.adjustTemp)
         )
       }
 
@@ -108,6 +108,10 @@ fun temperatureBox(temp: Float) {
   return Box(modifier = Modifier.width(100.dp).height(50.dp).background(Color.LightGray, RoundedCornerShape(16.dp)).border(2.dp, Color.DarkGray, RoundedCornerShape(16.dp)).padding(8.dp).clip(RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
     Text(String.format("%.2f°C", temp))
   }
+}
+
+fun Float.round2(): Float {
+  return String.format("%.2f", this).toFloat()
 }
 
 data class ProbeData(val name: String, val realTemp: Float?, val adjustTemp: Float, val onAdjustChange: (Float) -> Unit)
